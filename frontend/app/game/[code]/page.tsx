@@ -30,7 +30,19 @@ export default function GamePage() {
       // Spectator/takeover — don't join as player, just connect via WS
       setReady(true);
     } else {
-      api.joinGame(saved, code).catch(() => {}).finally(() => setReady(true));
+      api.joinGame(saved, code)
+        .then((data: any) => {
+          // Backend returns game_started:true when game is in progress and user isn't a player
+          if (data?.game_started) {
+            router.replace("/lobby");
+          } else {
+            setReady(true);
+          }
+        })
+        .catch(() => {
+          // Full room, game not found, etc. — send them back to lobby
+          router.replace("/lobby");
+        });
     }
   }, [code, router, isOutsider]);
 
