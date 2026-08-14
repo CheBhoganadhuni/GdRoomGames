@@ -18,8 +18,9 @@ export default function GamePage() {
   const takeoverSeat  = takeoverParam !== null ? Number(takeoverParam) : undefined;
   const isOutsider    = spectateSeat !== undefined || takeoverSeat !== undefined;
 
-  const [username, setUsername] = useState<string | null>(null);
-  const [ready,    setReady]    = useState(false);
+  const [username,    setUsername]    = useState<string | null>(null);
+  const [wsUsername,  setWsUsername]  = useState("");  // empty = WS won't connect yet
+  const [ready,       setReady]       = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("os_username");
@@ -27,7 +28,8 @@ export default function GamePage() {
     setUsername(saved);
 
     if (isOutsider) {
-      // Spectator/takeover — don't join as player, just connect via WS
+      // Spectator/takeover — authorized by design, connect WS immediately
+      setWsUsername(saved);
       setReady(true);
     } else {
       api.joinGame(saved, code)
@@ -36,6 +38,8 @@ export default function GamePage() {
           if (data?.game_started) {
             router.replace("/lobby");
           } else {
+            // Confirmed player — now open WS
+            setWsUsername(saved);
             setReady(true);
           }
         })
@@ -54,7 +58,7 @@ export default function GamePage() {
     extendGame, finishGame,
     peekStatus, peekRequest, requestPeek, acceptPeek, declinePeek,
     takeoverStatus, takeoverRequest, handedOff, requestTakeover, acceptTakeover, declineTakeover, kicked,
-  } = useGameSocket(code, username ?? "", spectateSeat, takeoverSeat);
+  } = useGameSocket(code, wsUsername, spectateSeat, takeoverSeat);
 
   // Auto-send peek/takeover request once state arrives
   useEffect(() => {
