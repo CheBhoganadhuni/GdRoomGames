@@ -60,8 +60,9 @@ export function useGameSocket(gameCode: string, username: string, spectateSeat?:
     let timeout: NodeJS.Timeout;
 
     const connect = () => {
-      const spectateParam = spectateSeat !== undefined ? `&spectate=${spectateSeat}` : "";
-      const url = `${WS_BASE}/ws/game/${gameCode}/?username=${encodeURIComponent(username)}${spectateParam}`;
+      const spectateParam  = spectateSeat  !== undefined ? `&spectate=${spectateSeat}`   : "";
+      const takeoverParam  = takeoverSeat  !== undefined ? `&takeover=${takeoverSeat}`   : "";
+      const url = `${WS_BASE}/ws/game/${gameCode}/?username=${encodeURIComponent(username)}${spectateParam}${takeoverParam}`;
       socket = new WebSocket(url);
       ws.current = socket;
 

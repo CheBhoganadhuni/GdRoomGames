@@ -39,6 +39,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         qs = parse_qs(self.scope.get("query_string", b"").decode())
         self.username   = (qs.get("username", ["Anonymous"])[0])[:50].strip() or "Anonymous"
         spectate_seat   = qs.get("spectate", [None])[0]
+        takeover_seat   = qs.get("takeover", [None])[0]
+        is_outsider     = spectate_seat is not None or takeover_seat is not None
 
         await self.channel_layer.group_add(self.room_group, self.channel_name)
         await self.accept()
@@ -46,8 +48,13 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Determine if this connection is a spectator (game started + not a player)
         self.is_spec = await self.detect_spectator(spectate_seat)
 
-        # Reject non-players who are not eligible spectators
+        # Reject non-players:
+        #  - who are not eligible spectators at all (game waiting / not found)
+        #  - or who connected without an explicit spectate/takeover param (raw URL access)
         if not self.is_spec and not await self.db_is_player():
+            await self.close(4003)
+            return
+        if self.is_spec and not is_outsider:
             await self.close(4003)
             return
 
