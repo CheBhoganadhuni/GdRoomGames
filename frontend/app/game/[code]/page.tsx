@@ -28,9 +28,17 @@ export default function GamePage() {
     setUsername(saved);
 
     if (isOutsider) {
-      // Spectator/takeover — authorized by design, connect WS immediately
-      setWsUsername(saved);
-      setReady(true);
+      // Validate game exists and is started before opening WS for spectate/takeover URLs
+      api.getGame(code)
+        .then((data: any) => {
+          if (!data || data.status === "waiting" || data.status === "finished") {
+            router.replace("/lobby");
+          } else {
+            setWsUsername(saved);
+            setReady(true);
+          }
+        })
+        .catch(() => router.replace("/lobby"));
     } else {
       api.joinGame(saved, code)
         .then((data: any) => {

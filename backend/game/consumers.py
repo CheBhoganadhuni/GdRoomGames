@@ -45,6 +45,12 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         # Determine if this connection is a spectator (game started + not a player)
         self.is_spec = await self.detect_spectator(spectate_seat)
+
+        # Reject non-players who are not eligible spectators
+        if not self.is_spec and not await self.db_is_player():
+            await self.close(4003)
+            return
+
         await self.set_connected(True)
         await self.broadcast_state()
 
@@ -921,7 +927,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def detect_spectator(self, spectate_seat):
-        """Return True and register/update spectator row if this user is not a player in a started game."""
+        """Return True if this user is eligible to spectate (not a player, game started).
+        Does NOT create the Spectator row — that happens only when request_peek fires,
+        so uninvited connections are invisible to other players."""
         try:
             game = Game.objects.get(code=self.game_code)
         except Game.DoesNotExist:
@@ -931,16 +939,13 @@ class GameConsumer(AsyncWebsocketConsumer):
             return False
         if game.status == Game.STATUS_WAITING:
             return False
-        # Upsert spectator row
-        spec, _ = Spectator.objects.get_or_create(game=game, username=self.username)
-        if spectate_seat is not None:
-            try:
-                target = game.players.get(seat=int(spectate_seat))
-                spec.target_player = target
-                spec.save()
-            except (Player.DoesNotExist, ValueError):
-                pass
         return True
+
+    @database_sync_to_async
+    def db_is_player(self):
+        return Game.objects.filter(
+            code=self.game_code, players__username=self.username
+        ).exists()
 
     @database_sync_to_async
     def set_connected(self, connected):
@@ -1186,7 +1191,10 @@ class GameConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def db_get_or_create_spectator(self):
         game = Game.objects.get(code=self.game_code)
-        spec, _ = Spectator.objects.get_or_create(game=game, username=self.username)
+        spec, _ = Spectator.objects.get_or_create(
+            game=game, username=self.username,
+            defaults={"is_connected": True},
+        )
         return spec
 
     @database_sync_to_async
