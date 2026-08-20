@@ -98,6 +98,15 @@ export default function LobbyPage() {
     setUsername(saved);
   }, [router]);
 
+  // Keep Render warm — ping every 8 minutes so the free-tier instance never sleeps
+  useEffect(() => {
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const ping = () => fetch(`${API_BASE}/api/game/health/`, { cache: "no-store" }).catch(() => {});
+    ping(); // immediate ping on mount to wake the instance fast
+    const id = setInterval(ping, 8 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
   useEffect(() => {
     if (tab !== "join") return;
     setGamesLoading(true);
