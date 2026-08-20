@@ -36,6 +36,8 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.game_code  = self.scope["url_route"]["kwargs"]["game_code"]
         self.room_group = f"game_{self.game_code}"
+        self.username   = "Anonymous"
+        self.is_spec    = False
         qs = parse_qs(self.scope.get("query_string", b"").decode())
         self.username   = (qs.get("username", ["Anonymous"])[0])[:50].strip() or "Anonymous"
         spectate_seat   = qs.get("spectate", [None])[0]
@@ -62,9 +64,15 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.broadcast_state()
 
     async def disconnect(self, code):
-        await self.set_connected(False)
+        try:
+            await self.set_connected(False)
+        except Exception:
+            pass
         await self.channel_layer.group_discard(self.room_group, self.channel_name)
-        await self.broadcast_state()
+        try:
+            await self.broadcast_state()
+        except Exception:
+            pass
 
     async def receive(self, text_data):
         data = json.loads(text_data)
