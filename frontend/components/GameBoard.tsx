@@ -1394,30 +1394,36 @@ export default function GameBoard({
               </div>
             )}
 
+            {/* Quick-chat: Spade + Heart */}
+            {state.status !== "finished" && (
+              <div className="grid grid-cols-2 gap-1.5 mb-2">
+                {[["Spade","♠"],["Heart","♥"]].map(([name, sym]) => (
+                  <button key={name} onClick={() => sendChat(name)}
+                    className="py-1.5 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all">
+                    {sym} {name}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Quick-chat: numbers */}
             {state.status !== "finished" && (
               <div className="flex gap-1.5 mb-2">
                 {["0","1","2","3","4","5"].map(n => (
-                  <button
-                    key={n}
-                    onClick={() => sendChat(n)}
-                    className="flex-1 py-1 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all"
-                  >
+                  <button key={n} onClick={() => sendChat(n)}
+                    className="flex-1 py-1 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all">
                     {n}
                   </button>
                 ))}
               </div>
             )}
 
-            {/* Quick-chat: suits 2×2 */}
+            {/* Quick-chat: Diamond + Club */}
             {state.status !== "finished" && (
               <div className="grid grid-cols-2 gap-1.5 mb-3">
-                {[["Spade","♠"],["Heart","♥"],["Diamond","♦"],["Club","♣"]].map(([name, sym]) => (
-                  <button
-                    key={name}
-                    onClick={() => sendChat(name)}
-                    className="py-1.5 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all"
-                  >
+                {[["Diamond","♦"],["Club","♣"]].map(([name, sym]) => (
+                  <button key={name} onClick={() => sendChat(name)}
+                    className="py-1.5 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all">
                     {sym} {name}
                   </button>
                 ))}
