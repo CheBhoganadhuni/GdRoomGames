@@ -384,7 +384,7 @@ export default function LobbyPage() {
                     }`}
                   >
                     {isTeam
-                      ? `🤝 Teams (${numPlayers / 2}v${numPlayers / 2})`
+                      ? numPlayers === 6 ? "🤝 Teams (format in room)" : `🤝 Teams (${numPlayers / 2}v${numPlayers / 2})`
                       : "Solo"}
                   </button>
                 ))}
