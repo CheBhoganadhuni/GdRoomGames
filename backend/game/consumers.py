@@ -233,9 +233,9 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.broadcast_state()
 
     async def handle_swap_bid_captain(self, data):
-        """Let the current team captain hand bidding rights to a teammate (bidding phase only)."""
+        """Let the current team captain hand bidding rights to a teammate (bidding or playing phase)."""
         game = await self.get_game()
-        if game.status != Game.STATUS_BIDDING or not game.teams_enabled:
+        if game.status not in (Game.STATUS_BIDDING, Game.STATUS_PLAYING) or not game.teams_enabled:
             return
         target_seat = data.get("target_seat")
         if target_seat is None:
@@ -272,8 +272,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         if target_seat not in team or target_seat == requestor.seat:
             return False
 
-        # Captain must not have bid yet — if already bid, nothing to pass
-        if seat_to_player[requestor.seat].bid >= 0:
+        # During bidding: captain must not have bid yet
+        if game.status == Game.STATUS_BIDDING and seat_to_player[requestor.seat].bid >= 0:
             return False
 
         # Swap: put target at position 0, push old captain to where target was
@@ -281,8 +281,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         team[0], team[old_idx] = team[old_idx], team[0]
         game.teams[team_idx] = team
 
-        # If it is currently this captain's bid turn, redirect to the new captain
-        if game.current_player_index == requestor.seat:
+        # During bidding: if it's currently the captain's turn to bid, redirect to new captain
+        if game.status == Game.STATUS_BIDDING and game.current_player_index == requestor.seat:
             game.current_player_index = target_seat
 
         game.save(update_fields=["teams", "current_player_index"])

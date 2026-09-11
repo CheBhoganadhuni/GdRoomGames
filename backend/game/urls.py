@@ -10,5 +10,4 @@ urlpatterns = [
     path("resume-export/",        views.ResumeFromExportView.as_view()),
     path("<str:code>/history/",   views.RoundHistoryView.as_view()),
     path("<str:code>/",           views.GameDetailView.as_view()),
-    path("send-results-screenshot/", views.SendResultsScreenshotView.as_view()),
 ]
