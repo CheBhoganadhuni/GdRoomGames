@@ -599,6 +599,12 @@ class GameConsumer(AsyncWebsocketConsumer):
             nxt = (game.current_player_index + 1) % len(players)
             await self.db_update_game(game, current_player_index=nxt)
             await self.broadcast_state()
+            # Schedule server-side autoplay if next player has a forced card
+            next_player = players[nxt]
+            forced = self._get_forced_card(next_player.hand, trick.lead_suit if trick else "")
+            if forced:
+                import asyncio
+                asyncio.create_task(self._server_auto_play(game.code, nxt, forced, delay=7))
             return
 
         # ── Trick complete ──
@@ -641,8 +647,58 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.db_update_game(game, current_player_index=winner.seat)
             await self.db_create_trick(game)
             await self.broadcast_state()
+            # Check if the trick-winner (first player of new trick) has a forced card
+            leader = next((p for p in fresh if p.seat == winner.seat), None)
+            if leader:
+                forced = self._get_forced_card(leader.hand, "")  # no lead suit yet
+                if forced:
+                    import asyncio
+                    asyncio.create_task(self._server_auto_play(game_code, winner.seat, forced, delay=7))
         else:
             await self.end_round(game, fresh)
+
+    def _get_forced_card(self, hand: list, lead_suit: str):
+        """Return the one card the player MUST play, or None if they have a choice."""
+        if len(hand) == 1:
+            return hand[0]
+        if lead_suit:
+            lead_cards = [c for c in hand if c["suit"] == lead_suit]
+            if len(lead_cards) == 1:
+                return lead_cards[0]
+        return None
+
+    async def _server_auto_play(self, game_code: str, expected_player_index: int, forced_card: dict, delay: int):
+        import asyncio
+        await asyncio.sleep(delay)
+
+        game = await self.get_game_by_code(game_code)
+        if game.status != Game.STATUS_PLAYING:
+            return
+        if game.current_player_index != expected_player_index:
+            return  # player already played
+
+        players = await self.get_players(game)
+        if expected_player_index >= len(players):
+            return
+        player = players[expected_player_index]
+
+        card_in_hand = any(
+            c["suit"] == forced_card["suit"]
+            and c["rank"] == forced_card["rank"]
+            and c["deck_id"] == forced_card.get("deck_id", 1)
+            for c in player.hand
+        )
+        if not card_in_hand:
+            return  # player already played
+
+        trick = await self.get_current_trick(game)
+        if not trick:
+            return
+        if await self.db_player_already_played(trick, player):
+            return
+
+        await self.db_play_card(game, player, forced_card)
+        await self.advance_play_turn(game)
 
     def _is_declared(self, game, players_after_scores):
         """Teams only: declared if leading team's gap exceeds max possible catchup from remaining rounds."""

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Card from "./Card";
 import Scoreboard from "./Scoreboard";
@@ -108,6 +108,8 @@ export default function GameBoard({
   const playingCardRef = useRef(false); // prevents double-play from rapid clicks
   const [showEndConfirm,    setShowEndConfirm]    = useState(false);
   const [showBidSwap,       setShowBidSwap]       = useState(false);
+  const [autoplayCountdown, setAutoplayCountdown] = useState<number | null>(null);
+  const autoplayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [showMenu,          setShowMenu]          = useState(false);
   const [showSpectators,    setShowSpectators]    = useState(false);
   const [showScoreboard, setShowScoreboard] = useState(false);
@@ -344,6 +346,56 @@ export default function GameBoard({
 
   // Use small cards if hand is large
   const useSmallCards = myHand.length > 9;
+
+  // Forced-play detection: card that MUST be played (no real choice)
+  const forcedCard = useMemo<CardType | null>(() => {
+    if (!myTurn || state.status !== "playing" || isSpectator) return null;
+    const hand = (me?.hand ?? []).filter((c) => !c.hidden);
+    if (hand.length === 1) return hand[0];
+    const leadSuit = state.current_trick[0]?.suit;
+    if (leadSuit) {
+      const leadCards = hand.filter((c) => c.suit === leadSuit);
+      if (leadCards.length === 1) return leadCards[0];
+    }
+    return null;
+  }, [myTurn, state.status, state.current_trick, me?.hand, isSpectator]);
+
+  // Countdown + auto-play when a forced card is detected
+  useEffect(() => {
+    if (forcedCard && !trickWinner) {
+      setAutoplayCountdown(5);
+      autoplayTimerRef.current = setInterval(() => {
+        setAutoplayCountdown((prev) => {
+          if (prev === null) return null;
+          if (prev <= 1) {
+            clearInterval(autoplayTimerRef.current!);
+            autoplayTimerRef.current = null;
+            // Play the card
+            if (!playingCardRef.current) {
+              playingCardRef.current = true;
+              onPlayCard(forcedCard);
+              setTimeout(() => { playingCardRef.current = false; }, 5000);
+            }
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (autoplayTimerRef.current) {
+        clearInterval(autoplayTimerRef.current);
+        autoplayTimerRef.current = null;
+      }
+      setAutoplayCountdown(null);
+    }
+    return () => {
+      if (autoplayTimerRef.current) {
+        clearInterval(autoplayTimerRef.current);
+        autoplayTimerRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forcedCard !== null, trickWinner]);
 
   const isActive = state.status === "bidding" || state.status === "playing";
 
@@ -981,11 +1033,17 @@ export default function GameBoard({
                 </div>
               </div>
 
-              {/* Play hint */}
+              {/* Play hint / autoplay countdown */}
               {state.status === "playing" && myTurn && !trickWinner && (
-                <p className="text-yellow-300 text-[11px] text-center mt-1.5 shrink-0 font-semibold">
-                  {selectedCard ? "Tap again to play →" : "Tap a card to select"}
-                </p>
+                autoplayCountdown !== null ? (
+                  <p className="text-orange-300 text-[11px] text-center mt-1.5 shrink-0 font-semibold animate-pulse">
+                    Auto-playing in {autoplayCountdown}…
+                  </p>
+                ) : (
+                  <p className="text-yellow-300 text-[11px] text-center mt-1.5 shrink-0 font-semibold">
+                    {selectedCard ? "Tap again to play →" : "Tap a card to select"}
+                  </p>
+                )
               )}
             </div>
 
