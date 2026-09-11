@@ -435,11 +435,11 @@ export default function GameBoard({
 
         {/* Right: chat (always) + desktop inline + hamburger (mobile) */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* SFX toggle */}
+          {/* SFX toggle — desktop only; mobile has it in hamburger */}
           <button
             onClick={toggleSfx}
             title={sfxOn ? "Mute sound effects" : "Unmute sound effects"}
-            className={`px-1.5 py-1 rounded-lg border text-[10px] font-bold tracking-wide transition-all ${
+            className={`hidden md:block px-1.5 py-1 rounded-lg border text-[10px] font-bold tracking-wide transition-all ${
               sfxOn
                 ? "bg-white/5 border-white/10 text-gray-400 hover:text-yellow-400"
                 : "bg-white/5 border-white/10 text-gray-700 line-through"
@@ -602,6 +602,16 @@ export default function GameBoard({
               </span>
             </div>
             <div className="flex items-center gap-2 px-3 py-2 flex-wrap">
+              <button
+                onClick={toggleSfx}
+                className={`px-3 py-1 rounded-lg border text-xs font-bold tracking-wide transition-all ${
+                  sfxOn
+                    ? "bg-white/5 border-white/10 text-gray-300"
+                    : "bg-white/5 border-white/10 text-gray-600 line-through"
+                }`}
+              >
+                SFX
+              </button>
               <button
                 onClick={() => setShowVoice(v => !v)}
                 className={`px-3 py-1 rounded-lg border text-xs font-semibold transition-all flex items-center gap-1.5 ${
