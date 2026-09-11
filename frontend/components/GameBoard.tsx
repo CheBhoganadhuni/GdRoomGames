@@ -120,6 +120,7 @@ export default function GameBoard({
 
   const [showChat, setShowChat] = useState(false);
   const [chatInput, setChatInput] = useState("");
+  const [calledUids, setCalledUids] = useState<Set<string>>(new Set());
   const [lastReadCount, setLastReadCount] = useState(0);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null); // null = closed
   const [mentionIndex, setMentionIndex] = useState(0);
@@ -1357,6 +1358,56 @@ export default function GameBoard({
                 ✕
               </button>
             </div>
+
+            {/* Quick-call buttons */}
+            {state.status !== "finished" && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {state.players.filter(p => p.username !== username).map(p => {
+                  const onCooldown = calledUids.has(p.username);
+                  return (
+                    <button
+                      key={p.username}
+                      disabled={onCooldown}
+                      onClick={() => {
+                        sendChat(`@${p.username}`);
+                        setCalledUids(prev => {
+                          const next = new Set(prev);
+                          next.add(p.username);
+                          return next;
+                        });
+                        setTimeout(() => setCalledUids(prev => {
+                          const next = new Set(prev);
+                          next.delete(p.username);
+                          return next;
+                        }), 5000);
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all ${
+                        onCooldown
+                          ? "bg-white/5 border-white/5 text-gray-600 cursor-not-allowed"
+                          : "bg-white/10 border-white/15 text-gray-300 hover:bg-yellow-400/15 hover:text-yellow-300 hover:border-yellow-400/30"
+                      }`}
+                    >
+                      {onCooldown ? `✓ ${p.username}` : `@ ${p.username}`}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Quick-chat chips: numbers + suits */}
+            {state.status !== "finished" && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {["0","1","2","3","4","5","♠","♥","♦","♣"].map(chip => (
+                  <button
+                    key={chip}
+                    onClick={() => sendChat(chip)}
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Message history */}
             <div className="flex-1 overflow-y-auto space-y-2 mb-3 pr-1 text-xs scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
