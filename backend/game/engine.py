@@ -119,3 +119,12 @@ def assign_teams(seats: list[int]) -> list[list[int]]:
     ordered = sorted(seats)
     half = len(ordered) // 2
     return [[ordered[i], ordered[i + half]] for i in range(half)]
+
+
+def assign_teams_3v3(seats: list[int]) -> list[list[int]]:
+    """
+    Two teams of 3 for 6-player games: alternating seats.
+    6p: [0,2,4] vs [1,3,5]
+    """
+    ordered = sorted(seats)
+    return [[ordered[0], ordered[2], ordered[4]], [ordered[1], ordered[3], ordered[5]]]

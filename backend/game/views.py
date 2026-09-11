@@ -380,3 +380,36 @@ class AgoraTokenView(APIView):
         expire = int(time.time()) + 3600  # 1 hour
         token  = RtcTokenBuilder.buildTokenWithUid(app_id, app_cert, channel, uid, 1, expire)  # 1 = publisher
         return Response({"token": token, "app_id": app_id})
+
+
+
+class SendResultsScreenshotView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        image = request.FILES.get("image")
+        if not image:
+            return Response({"error": "no image"}, status=400)
+
+        from django.conf import settings
+        import requests as req
+
+        token   = getattr(settings, "TELEGRAM_BOT_TOKEN", "")
+        chat_id = getattr(settings, "TELEGRAM_CHAT_ID", "")
+        if not token or not chat_id:
+            return Response({"ok": False, "error": "telegram not configured"}, status=200)
+
+        game_code = request.data.get("game_code", "")
+        caption   = f"🃏 *OpenSpades Results*\nGame: `{game_code}`"
+
+        try:
+            req.post(
+                f"https://api.telegram.org/bot{token}/sendPhoto",
+                data={"chat_id": chat_id, "caption": caption, "parse_mode": "Markdown"},
+                files={"photo": ("results.png", image.read(), "image/png")},
+                timeout=20,
+            )
+        except Exception:
+            pass
+
+        return Response({"ok": True})

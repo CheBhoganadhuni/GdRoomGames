@@ -95,6 +95,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             "send_reaction":    self.handle_send_reaction,
             "rematch":          self.handle_rematch,
             "kick_spectator":   self.handle_kick_spectator,
+            "swap_bid_captain": self.handle_swap_bid_captain,
         }
         handler = handlers.get(data.get("action"))
         if handler:
@@ -135,7 +136,15 @@ class GameConsumer(AsyncWebsocketConsumer):
         max_r  = min(chosen, actual_max) if chosen > 0 else actual_max
 
         teams_valid = game.teams_enabled and len(players) >= 4 and len(players) % 2 == 0
-        teams = engine.assign_teams([p.seat for p in players]) if teams_valid else []
+        team_mode   = data.get("team_mode", "pairs")
+        if teams_valid:
+            seats = [p.seat for p in players]
+            if team_mode == "3v3" and len(players) == 6:
+                teams = engine.assign_teams_3v3(seats)
+            else:
+                teams = engine.assign_teams(seats)
+        else:
+            teams = []
 
         lead_idx = lead_override if (lead_override is not None and 0 <= lead_override < len(players)) else 0
 
@@ -222,6 +231,62 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.room_group, {"type": "spectator_kicked_msg", "username": target}
             )
             await self.broadcast_state()
+
+    async def handle_swap_bid_captain(self, data):
+        """Let the current team captain hand bidding rights to a teammate (bidding phase only)."""
+        game = await self.get_game()
+        if game.status != Game.STATUS_BIDDING or not game.teams_enabled:
+            return
+        target_seat = data.get("target_seat")
+        if target_seat is None:
+            return
+        swapped = await self.db_swap_bid_captain(game, self.username, int(target_seat))
+        if swapped:
+            await self.broadcast_state()
+
+    @database_sync_to_async
+    def db_swap_bid_captain(self, game, requestor_username, target_seat):
+        """
+        Swap team[i][0] → target_seat so the target becomes the new bidding captain.
+        Seat order and play order are unaffected — only the captain designation changes.
+        """
+        players = list(game.players.order_by("seat"))
+        seat_to_player = {p.seat: p for p in players}
+
+        requestor = next((p for p in players if p.username == requestor_username), None)
+        if requestor is None:
+            return False
+
+        # Find which team the requestor captains
+        team_idx = None
+        for i, team in enumerate(game.teams):
+            if team[0] == requestor.seat:
+                team_idx = i
+                break
+        if team_idx is None:
+            return False  # requestor is not a captain
+
+        team = game.teams[team_idx]
+
+        # Target must be a teammate (not the captain themselves)
+        if target_seat not in team or target_seat == requestor.seat:
+            return False
+
+        # Captain must not have bid yet — if already bid, nothing to pass
+        if seat_to_player[requestor.seat].bid >= 0:
+            return False
+
+        # Swap: put target at position 0, push old captain to where target was
+        old_idx = team.index(target_seat)
+        team[0], team[old_idx] = team[old_idx], team[0]
+        game.teams[team_idx] = team
+
+        # If it is currently this captain's bid turn, redirect to the new captain
+        if game.current_player_index == requestor.seat:
+            game.current_player_index = target_seat
+
+        game.save(update_fields=["teams", "current_player_index"])
+        return True
 
     async def handle_cancel_game(self, data):
         game = await self.get_game()

@@ -87,27 +87,25 @@ def build_game_snapshot(game_code: str) -> dict | None:
 
 
 def send_snapshot_to_telegram(snap: dict):
-    """Send a pre-built snapshot dict to Telegram."""
+    """Send JSON snapshot to Telegram. Results screenshot is sent separately by the frontend."""
     token   = settings.TELEGRAM_BOT_TOKEN
     chat_id = settings.TELEGRAM_CHAT_ID
     if not token or not chat_id:
         return
 
     game_code = snap.get("code", "UNKNOWN")
+    players   = ", ".join(p["username"] for p in snap.get("players", []))
     content   = json.dumps(snap, ensure_ascii=False)
     filename  = f"openspades_{game_code}.json"
-    players   = ", ".join(p["username"] for p in snap["players"])
-    caption   = (
-        f"🃏 *OpenSpades Snapshot*\n"
-        f"Code: `{game_code}` · R{snap['current_round']}/{snap['max_rounds']}\n"
-        f"Status at save: `{snap['status']}`\n"
-        f"Players: {players}"
-    )
 
     try:
         requests.post(
             f"https://api.telegram.org/bot{token}/sendDocument",
-            data={"chat_id": chat_id, "caption": caption, "parse_mode": "Markdown"},
+            data={
+                "chat_id":    chat_id,
+                "caption":    f"🃏 *OpenSpades Snapshot*\nCode: `{game_code}` · R{snap['current_round']}/{snap['max_rounds']}\nPlayers: {players}",
+                "parse_mode": "Markdown",
+            },
             files={"document": (filename, content.encode("utf-8"), "application/json")},
             timeout=15,
         )

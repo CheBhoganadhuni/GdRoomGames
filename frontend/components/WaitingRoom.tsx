@@ -14,8 +14,14 @@ interface Props {
   onKickPlayer: (targetUsername: string) => void;
 }
 
-// Mirrors engine.assign_teams: seat i pairs with seat i+half
-function previewTeams(order: string[]): string[][] {
+function previewTeams(order: string[], mode: "pairs" | "3v3" = "pairs"): string[][] {
+  if (mode === "3v3" && order.length === 6) {
+    return [
+      [order[0], order[2], order[4]],
+      [order[1], order[3], order[5]],
+    ];
+  }
+  // Mirrors engine.assign_teams: seat i pairs with seat i+half
   const half = Math.floor(order.length / 2);
   return Array.from({ length: half }, (_, i) => [order[i], order[i + half]].filter(Boolean));
 }
@@ -31,6 +37,7 @@ export default function WaitingRoom({ state, username, gameCode, onStartGame, on
   const [playerOrder, setPlayerOrder] = useState<string[]>(joinedUsernames);
   const [leadSeat,    setLeadSeat]    = useState(0);
   const [scoreInputs, setScoreInputs] = useState<Record<string, string>>({});
+  const [teamMode,    setTeamMode]    = useState<"pairs" | "3v3">("pairs");
 
   // Sync playerOrder when new players join (append newcomers to end)
   useEffect(() => {
@@ -48,6 +55,17 @@ export default function WaitingRoom({ state, username, gameCode, onStartGame, on
   useEffect(() => {
     if (leadSeat >= playerOrder.length) setLeadSeat(0);
   }, [playerOrder.length, leadSeat]);
+
+  function shuffle() {
+    setPlayerOrder(prev => {
+      const a = [...prev];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    });
+  }
 
   function move(idx: number, dir: -1 | 1) {
     const target = idx + dir;
@@ -75,6 +93,10 @@ export default function WaitingRoom({ state, username, gameCode, onStartGame, on
     }
     if (Object.keys(scores).length > 0) overrides.scoreOverride = scores;
 
+    if (state.teams_enabled && teamMode === "3v3" && state.players.length === 6) {
+      overrides.teamMode = "3v3";
+    }
+
     onStartGame(Object.keys(overrides).length > 0 ? overrides : undefined);
   }
 
@@ -84,7 +106,7 @@ export default function WaitingRoom({ state, username, gameCode, onStartGame, on
   const expected = state.expected_players;
   const canStart = joined >= 2;
 
-  const teams        = state.teams_enabled ? previewTeams(playerOrder) : [];
+  const teams        = state.teams_enabled ? previewTeams(playerOrder, teamMode) : [];
   const TEAM_COLORS  = ["text-red-400", "text-blue-400", "text-emerald-400", "text-amber-400"];
 
   function copyCode() {
@@ -259,12 +281,20 @@ export default function WaitingRoom({ state, username, gameCode, onStartGame, on
 
                   {/* ── Seat order ──────────────────────────────────────────── */}
                   <div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-2">
-                      Seat Order
-                      <span className="ml-1.5 text-gray-700 normal-case tracking-normal font-normal">
-                        {state.teams_enabled ? "· controls team pairings" : "· controls play order"}
-                      </span>
-                    </p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">
+                        Seat Order
+                        <span className="ml-1.5 text-gray-700 normal-case tracking-normal font-normal">
+                          {state.teams_enabled ? "· controls team pairings" : "· controls play order"}
+                        </span>
+                      </p>
+                      <button
+                        onClick={shuffle}
+                        className="text-[10px] px-2 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-gray-400 hover:text-white border border-white/10 font-semibold transition-all"
+                      >
+                        🔀 Shuffle
+                      </button>
+                    </div>
                     <div className="space-y-1.5">
                       {playerOrder.map((uname, idx) => {
                         const teamIdx   = teams.findIndex(t => t.includes(uname));
@@ -299,6 +329,28 @@ export default function WaitingRoom({ state, username, gameCode, onStartGame, on
                         );
                       })}
                     </div>
+
+                    {/* Team format toggle (6-player teams only) */}
+                    {state.teams_enabled && state.players.length === 6 && (
+                      <div className="mt-3">
+                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-1.5">Team Format</p>
+                        <div className="flex gap-1.5">
+                          {(["pairs", "3v3"] as const).map((mode) => (
+                            <button
+                              key={mode}
+                              onClick={() => setTeamMode(mode)}
+                              className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                                teamMode === mode
+                                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                  : "bg-white/5 text-gray-500 border-white/10 hover:text-gray-300"
+                              }`}
+                            >
+                              {mode === "pairs" ? "2+2+2 (3 teams)" : "3v3 (2 teams)"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Team preview */}
                     {state.teams_enabled && teams.length > 0 && (

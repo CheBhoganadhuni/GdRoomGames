@@ -31,6 +31,7 @@ interface Props {
   onPlayCard: (card: CardType) => void;
   onEndGame: () => void;
   onKickSpectator: (username: string) => void;
+  onSwapBidCaptain: (targetSeat: number) => void;
   onExtendGame: () => void;
   onFinishGame: () => void;
   // Spectator/peek mode
@@ -83,6 +84,7 @@ export default function GameBoard({
   onPlayCard,
   onEndGame,
   onKickSpectator,
+  onSwapBidCaptain,
   onExtendGame,
   onFinishGame,
   isSpectator = false,
@@ -105,6 +107,7 @@ export default function GameBoard({
   const [selectedCard,   setSelectedCard]   = useState<string | null>(null);
   const playingCardRef = useRef(false); // prevents double-play from rapid clicks
   const [showEndConfirm,    setShowEndConfirm]    = useState(false);
+  const [showBidSwap,       setShowBidSwap]       = useState(false);
   const [showMenu,          setShowMenu]          = useState(false);
   const [showSpectators,    setShowSpectators]    = useState(false);
   const [showScoreboard, setShowScoreboard] = useState(false);
@@ -247,6 +250,29 @@ export default function GameBoard({
   const myTurn   = !isSpectator && !!me && state.players[state.current_player_index]?.username === username;
   const isHost   = !isSpectator && state.host_username === username;
 
+  // Screenshot results card and send to Telegram once when game finishes
+  const bannerRef        = useRef<HTMLDivElement | null>(null);
+  const screenshotSent   = useRef(false);
+  useEffect(() => {
+    if (state.status !== "finished" || screenshotSent.current || !bannerRef.current) return;
+    screenshotSent.current = true;
+    const el = bannerRef.current;
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    // Wait for animation to settle before capturing
+    setTimeout(async () => {
+      try {
+        const { toPng } = await import("html-to-image");
+        const dataUrl = await toPng(el, { cacheBust: true, pixelRatio: 2 });
+        const res  = await fetch(dataUrl);
+        const blob = await res.blob();
+        const form = new FormData();
+        form.append("image",     blob, "results.png");
+        form.append("game_code", gameCode);
+        await fetch(`${API_BASE}/api/game/send-results-screenshot/`, { method: "POST", body: form });
+      } catch { /* never let export failure affect the game */ }
+    }, 1200);
+  }, [state.status]);
+
   // Confetti: fire once when game transitions to finished
   const prevStatusRef = useRef<string | null>(null);
   useEffect(() => {
@@ -271,6 +297,7 @@ export default function GameBoard({
         setTimeout(() => setShowConfetti(false), 3500);
       }
     }
+    if (state.status !== "bidding") setShowBidSwap(false);
     prevStatusRef.current = state.status;
   }, [state.status]);
 
@@ -877,6 +904,7 @@ export default function GameBoard({
       ) : state.status === "finished" ? (
         /* Finished: full-center banner */
         <div className="flex-1 flex items-center justify-center p-4">
+          <div ref={bannerRef} className="inline-block">
           <GameOverBanner
             players={state.players}
             teamsEnabled={state.teams_enabled}
@@ -887,6 +915,7 @@ export default function GameBoard({
             onNewGame={() => { window.location.href = "/lobby"; }}
             onRematch={onRematch}
           />
+          </div>
         </div>
       ) : (
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -1019,6 +1048,44 @@ export default function GameBoard({
                       >
                         {activeBidder?.username} is bidding…
                       </motion.p>
+                    )}
+
+                    {/* Pass bid — shown to captain while their team hasn't bid yet */}
+                    {iAmCaptain && state.teams_enabled && me && (me.bid < 0) && myTeam && (
+                      <div className="mt-2">
+                        {!showBidSwap ? (
+                          <button
+                            onClick={() => setShowBidSwap(true)}
+                            className="w-full text-[11px] text-gray-500 hover:text-yellow-400 py-1 transition-colors"
+                          >
+                            Pass bid to teammate →
+                          </button>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5 justify-center">
+                            <span className="text-[11px] text-gray-500 w-full text-center mb-0.5">Pass bid to:</span>
+                            {myTeam
+                              .filter((seat) => seat !== me.seat)
+                              .map((seat) => {
+                                const p = state.players.find((pl) => pl.seat === seat);
+                                return p ? (
+                                  <button
+                                    key={seat}
+                                    onClick={() => { onSwapBidCaptain(seat); setShowBidSwap(false); }}
+                                    className="px-3 py-1 rounded-lg bg-yellow-400/10 border border-yellow-400/30 text-yellow-300 text-xs font-semibold hover:bg-yellow-400/20 transition-all"
+                                  >
+                                    {p.username}
+                                  </button>
+                                ) : null;
+                              })}
+                            <button
+                              onClick={() => setShowBidSwap(false)}
+                              className="px-2 py-1 text-[11px] text-gray-600 hover:text-gray-400"
+                            >
+                              cancel
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </>
                 ) : (

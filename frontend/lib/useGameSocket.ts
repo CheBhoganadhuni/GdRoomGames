@@ -32,6 +32,7 @@ export interface GameStartOverrides {
   seatOrder?: string[];
   leadPlayerIndex?: number;
   scoreOverride?: Record<string, number>;
+  teamMode?: "3v3";
 }
 
 export function useGameSocket(gameCode: string, username: string, spectateSeat?: number, takeoverSeat?: number) {
@@ -210,10 +211,12 @@ export function useGameSocket(gameCode: string, username: string, spectateSeat?:
     ...(overrides?.seatOrder        && { seat_order: overrides.seatOrder }),
     ...(overrides?.leadPlayerIndex != null && { lead_player_index: overrides.leadPlayerIndex }),
     ...(overrides?.scoreOverride    && { score_override: overrides.scoreOverride }),
+    ...(overrides?.teamMode         && { team_mode: overrides.teamMode }),
   }), [send]);
   const cancelGame   = useCallback(() => send({ action: "cancel_game" }), [send]);
   const kickPlayer       = useCallback((targetUsername: string) => send({ action: "kick_player", target_username: targetUsername }), [send]);
   const kickSpectator    = useCallback((spectatorUsername: string) => send({ action: "kick_spectator", spectator_username: spectatorUsername }), [send]);
+  const swapBidCaptain   = useCallback((targetSeat: number) => send({ action: "swap_bid_captain", target_seat: targetSeat }), [send]);
   const placeBid     = useCallback((bid: number) => send({ action: "place_bid", bid }), [send]);
   const playCard     = useCallback((card: Card) => send({ action: "play_card", card }), [send]);
   const endGame      = useCallback(() => send({ action: "end_game" }), [send]);
@@ -272,6 +275,7 @@ export function useGameSocket(gameCode: string, username: string, spectateSeat?:
     cancelGame,
     kickPlayer,
     kickSpectator,
+    swapBidCaptain,
     placeBid,
     playCard,
     endGame,

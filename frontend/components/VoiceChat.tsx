@@ -1,6 +1,16 @@
 "use client";
 import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from "react";
 
+// Deterministic Agora UID from username so we can reverse-lookup by name.
+// djb2 hash clamped to positive 32-bit int (Agora valid range: 1..2^32-1).
+function usernameToUid(name: string): number {
+  let h = 5381;
+  for (let i = 0; i < name.length; i++) {
+    h = ((h << 5) + h + name.charCodeAt(i)) & 0x7fffffff;
+  }
+  return h || 1;
+}
+
 interface Props {
   gameCode: string;
   username: string;
@@ -37,18 +47,19 @@ const VoiceChat = forwardRef<VoiceChatHandle, Props>(function VoiceChat(
     onLiveChange?.(phase === "live");
   }, [phase, onLiveChange]);
 
-  // Expose toggleMuteUid to parent
+  // Expose toggleMuteUid to parent — called with the player's username
   useImperativeHandle(ref, () => ({
-    toggleMuteUid: (uid: string) => {
+    toggleMuteUid: (targetUsername: string) => {
+      const uid   = String(usernameToUid(targetUsername));
       const track = audioTracksRef.current.get(uid);
       setMutedUids(prev => {
         const next = new Set(prev);
-        if (next.has(uid)) {
+        if (next.has(targetUsername)) {
           track?.play();
-          next.delete(uid);
+          next.delete(targetUsername);
         } else {
           track?.stop();
-          next.add(uid);
+          next.add(targetUsername);
         }
         return next;
       });
@@ -110,7 +121,7 @@ const VoiceChat = forwardRef<VoiceChatHandle, Props>(function VoiceChat(
         });
       });
 
-      await client.join(appId, gameCode, token, null);
+      await client.join(appId, gameCode, token, usernameToUid(username));
 
       const micTrack = await AgoraRTC.createMicrophoneAudioTrack();
       localTrackRef.current = micTrack;
