@@ -1394,16 +1394,31 @@ export default function GameBoard({
               </div>
             )}
 
-            {/* Quick-chat chips: numbers + suits */}
+            {/* Quick-chat: numbers */}
             {state.status !== "finished" && (
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {["0","1","2","3","4","5","♠","♥","♦","♣"].map(chip => (
+              <div className="flex gap-1.5 mb-2">
+                {["0","1","2","3","4","5"].map(n => (
                   <button
-                    key={chip}
-                    onClick={() => sendChat(chip)}
-                    className="px-2.5 py-1 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all"
+                    key={n}
+                    onClick={() => sendChat(n)}
+                    className="flex-1 py-1 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all"
                   >
-                    {chip}
+                    {n}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Quick-chat: suits 2×2 */}
+            {state.status !== "finished" && (
+              <div className="grid grid-cols-2 gap-1.5 mb-3">
+                {[["Spade","♠"],["Heart","♥"],["Diamond","♦"],["Club","♣"]].map(([name, sym]) => (
+                  <button
+                    key={name}
+                    onClick={() => sendChat(name)}
+                    className="py-1.5 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all"
+                  >
+                    {sym} {name}
                   </button>
                 ))}
               </div>
