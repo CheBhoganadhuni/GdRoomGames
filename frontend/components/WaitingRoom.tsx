@@ -331,7 +331,7 @@ export default function WaitingRoom({ state, username, gameCode, onStartGame, on
                     </div>
 
                     {/* Team format toggle (6-player teams only) */}
-                    {state.teams_enabled && state.players.length === 6 && (
+                    {state.teams_enabled && state.expected_players === 6 && (
                       <div className="mt-3">
                         <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-1.5">Team Format</p>
                         <div className="flex gap-1.5">
