@@ -501,24 +501,33 @@ export default function GameBoard({
             <span className="text-gray-600 text-[11px]">{username}</span>
             {/* Pass bid captain — desktop, during play */}
             {iAmCaptain && state.teams_enabled && myTeam && myTeam.length > 1 && state.status === "playing" && (
-              <div className="relative group">
-                <button className="text-[10px] text-yellow-400/80 hover:text-yellow-300 border border-yellow-400/25 hover:border-yellow-400/50 px-1.5 py-0.5 rounded transition-all">
-                  Pass bid ▾
+              <div className="relative">
+                <button
+                  onClick={() => setShowBidSwap(v => !v)}
+                  className={`text-[10px] border px-1.5 py-0.5 rounded transition-all ${
+                    showBidSwap
+                      ? "bg-yellow-400/15 border-yellow-400/50 text-yellow-300"
+                      : "text-yellow-400/80 hover:text-yellow-300 border-yellow-400/25 hover:border-yellow-400/50"
+                  }`}
+                >
+                  Pass bid {showBidSwap ? "▴" : "▾"}
                 </button>
-                <div className="absolute right-0 top-full mt-1 hidden group-hover:flex flex-col gap-1 bg-gray-900 border border-white/10 rounded-xl p-1.5 z-50 min-w-[100px]">
-                  {myTeam.filter((seat) => seat !== me?.seat).map((seat) => {
-                    const p = state.players.find((pl) => pl.seat === seat);
-                    return p ? (
-                      <button
-                        key={seat}
-                        onClick={() => onSwapBidCaptain(seat)}
-                        className="px-2.5 py-1 rounded-lg bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-300 text-[11px] font-semibold text-left transition-all"
-                      >
-                        {p.username}
-                      </button>
-                    ) : null;
-                  })}
-                </div>
+                {showBidSwap && (
+                  <div className="absolute right-0 top-full mt-1 flex flex-col gap-1 bg-gray-900 border border-white/10 rounded-xl p-1.5 z-50 min-w-[100px]">
+                    {myTeam.filter((seat) => seat !== me?.seat).map((seat) => {
+                      const p = state.players.find((pl) => pl.seat === seat);
+                      return p ? (
+                        <button
+                          key={seat}
+                          onClick={() => { onSwapBidCaptain(seat); setShowBidSwap(false); }}
+                          className="px-2.5 py-1 rounded-lg bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-300 text-[11px] font-semibold text-left transition-all"
+                        >
+                          {p.username}
+                        </button>
+                      ) : null;
+                    })}
+                  </div>
+                )}
               </div>
             )}
             {isHost && state.status !== "finished" && (
