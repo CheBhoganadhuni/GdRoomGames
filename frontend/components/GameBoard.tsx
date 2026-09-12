@@ -577,14 +577,28 @@ export default function GameBoard({
                           </span>
                         )}
                       </span>
-                      {isHost && (
-                        <button
-                          onClick={() => onKickSpectator(s.username)}
-                          className="text-[10px] text-red-400/70 hover:text-red-400 border border-red-400/20 px-2 py-0.5 rounded transition-all"
-                        >
-                          Kick
-                        </button>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        {voiceIsLive && (
+                          <button
+                            onClick={() => voiceChatRef.current?.toggleMuteUid(s.username)}
+                            className={`text-[10px] border px-2 py-0.5 rounded transition-all ${
+                              voiceMutedUids.has(s.username)
+                                ? "bg-red-500/20 border-red-500/40 text-red-400"
+                                : "border-white/10 text-gray-500 hover:text-gray-300"
+                            }`}
+                          >
+                            {voiceMutedUids.has(s.username) ? "🔇" : "🔊"}
+                          </button>
+                        )}
+                        {isHost && (
+                          <button
+                            onClick={() => onKickSpectator(s.username)}
+                            className="text-[10px] text-red-400/70 hover:text-red-400 border border-red-400/20 px-2 py-0.5 rounded transition-all"
+                          >
+                            Kick
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1360,75 +1374,59 @@ export default function GameBoard({
             </div>
 
             {/* Quick-call buttons */}
-            {state.status !== "finished" && (
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {state.players.filter(p => p.username !== username).map(p => {
-                  const onCooldown = calledUids.has(p.username);
-                  return (
-                    <button
-                      key={p.username}
-                      disabled={onCooldown}
-                      onClick={() => {
-                        sendChat(`@${p.username}`);
-                        setCalledUids(prev => {
-                          const next = new Set(prev);
-                          next.add(p.username);
-                          return next;
-                        });
-                        setTimeout(() => setCalledUids(prev => {
-                          const next = new Set(prev);
-                          next.delete(p.username);
-                          return next;
-                        }), 5000);
-                      }}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all ${
-                        onCooldown
-                          ? "bg-white/5 border-white/5 text-gray-600 cursor-not-allowed"
-                          : "bg-white/10 border-white/15 text-gray-300 hover:bg-yellow-400/15 hover:text-yellow-300 hover:border-yellow-400/30"
-                      }`}
-                    >
-                      {onCooldown ? `✓ ${p.username}` : `@ ${p.username}`}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {state.players.filter(p => p.username !== username).map(p => {
+                const onCooldown = calledUids.has(p.username);
+                return (
+                  <button
+                    key={p.username}
+                    disabled={onCooldown}
+                    onClick={() => {
+                      sendChat(`@${p.username}`);
+                      setCalledUids(prev => { const next = new Set(prev); next.add(p.username); return next; });
+                      setTimeout(() => setCalledUids(prev => { const next = new Set(prev); next.delete(p.username); return next; }), 5000);
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all ${
+                      onCooldown
+                        ? "bg-white/5 border-white/5 text-gray-600 cursor-not-allowed"
+                        : "bg-white/10 border-white/15 text-gray-300 hover:bg-yellow-400/15 hover:text-yellow-300 hover:border-yellow-400/30"
+                    }`}
+                  >
+                    {onCooldown ? `✓ ${p.username}` : `@ ${p.username}`}
+                  </button>
+                );
+              })}
+            </div>
 
             {/* Quick-chat: Spade + Heart */}
-            {state.status !== "finished" && (
-              <div className="grid grid-cols-2 gap-1.5 mb-2">
-                {[["Spade","♠"],["Heart","♥"]].map(([name, sym]) => (
-                  <button key={name} onClick={() => sendChat(name)}
-                    className="py-1.5 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all">
-                    {sym} {name}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="grid grid-cols-2 gap-1.5 mb-2">
+              {[["Spade","♠"],["Heart","♥"]].map(([name, sym]) => (
+                <button key={name} onClick={() => sendChat(name)}
+                  className="py-1.5 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all">
+                  {sym} {name}
+                </button>
+              ))}
+            </div>
 
             {/* Quick-chat: numbers */}
-            {state.status !== "finished" && (
-              <div className="flex gap-1.5 mb-2">
-                {["0","1","2","3","4","5"].map(n => (
-                  <button key={n} onClick={() => sendChat(n)}
-                    className="flex-1 py-1 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all">
-                    {n}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="flex gap-1.5 mb-2">
+              {["0","1","2","3","4","5"].map(n => (
+                <button key={n} onClick={() => sendChat(n)}
+                  className="flex-1 py-1 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all">
+                  {n}
+                </button>
+              ))}
+            </div>
 
             {/* Quick-chat: Diamond + Club */}
-            {state.status !== "finished" && (
-              <div className="grid grid-cols-2 gap-1.5 mb-3">
-                {[["Diamond","♦"],["Club","♣"]].map(([name, sym]) => (
-                  <button key={name} onClick={() => sendChat(name)}
-                    className="py-1.5 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all">
-                    {sym} {name}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="grid grid-cols-2 gap-1.5 mb-3">
+              {[["Diamond","♦"],["Club","♣"]].map(([name, sym]) => (
+                <button key={name} onClick={() => sendChat(name)}
+                  className="py-1.5 rounded-lg text-[11px] font-bold border bg-white/5 border-white/10 text-gray-400 hover:bg-white/15 hover:text-white transition-all">
+                  {sym} {name}
+                </button>
+              ))}
+            </div>
 
             {/* Message history */}
             <div className="flex-1 overflow-y-auto space-y-2 mb-3 pr-1 text-xs scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
