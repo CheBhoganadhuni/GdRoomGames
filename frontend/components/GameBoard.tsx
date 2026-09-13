@@ -1903,22 +1903,26 @@ function ShareButton({ text, captureRef }: { text: string; captureRef?: React.Re
   const isMobile = typeof navigator !== "undefined" && /Mobi|Android/i.test(navigator.userAgent);
 
   // Pre-capture image on mount so share() is synchronous (gesture-window safe).
-  // Pass backgroundColor so Tailwind bg classes are honoured by html-to-image.
+  // Delay 800ms so Framer Motion finishes its entrance animation (opacity 0→1),
+  // then force opacity/transform so the snapshot is never taken mid-animation.
   useEffect(() => {
     if (!captureRef?.current) return;
-    (async () => {
+    const el = captureRef.current;
+    const timer = setTimeout(async () => {
       try {
         const { toPng } = await import("html-to-image");
-        const dataUrl = await toPng(captureRef.current!, {
+        const dataUrl = await toPng(el, {
           cacheBust: true,
           pixelRatio: 2,
-          backgroundColor: "#0f2213",
+          backgroundColor: "#0d2b1e",
+          style: { opacity: "1", transform: "none" },
         });
         const blob = await fetch(dataUrl).then(r => r.blob());
         imageBlobRef.current = blob;
         imageFileRef.current = new File([blob], "openspades-results.png", { type: "image/png" });
       } catch { /* fall back to text-only */ }
-    })();
+    }, 800);
+    return () => clearTimeout(timer);
   }, [captureRef]);
 
   // Mobile: native share sheet with image — user picks WhatsApp from the sheet
