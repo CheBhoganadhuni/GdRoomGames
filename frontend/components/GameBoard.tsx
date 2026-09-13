@@ -1893,6 +1893,86 @@ function BidAccuracyBadge({ usernames, roundHistory }: {
   );
 }
 
+function ShareButton({ text, captureRef }: { text: string; captureRef?: React.RefObject<HTMLDivElement | null> }) {
+  const [busy,   setBusy]   = useState(false);
+  const [copied, setCopied] = useState(false);
+  const url  = "https://openspades.in";
+  const full = `${text}\n\n🃏 Play free: ${url}`;
+
+  const share = async () => {
+    if (busy) return;
+    setBusy(true);
+    let imageFile: File | undefined;
+
+    if (captureRef?.current) {
+      try {
+        const { toPng } = await import("html-to-image");
+        const dataUrl = await toPng(captureRef.current, { cacheBust: true, pixelRatio: 2 });
+        const blob    = await fetch(dataUrl).then(r => r.blob());
+        imageFile = new File([blob], "openspades-results.png", { type: "image/png" });
+      } catch { /* ignore — fall back to text-only */ }
+    }
+
+    const shareData: ShareData = { text: full };
+    if (imageFile && navigator.canShare?.({ files: [imageFile] })) {
+      shareData.files = [imageFile];
+    }
+
+    if (navigator.share) {
+      try { await navigator.share(shareData); setBusy(false); return; } catch { /* cancelled */ }
+    }
+    // Desktop fallback — WhatsApp Web with text
+    window.open(`https://wa.me/?text=${encodeURIComponent(full)}`, "_blank");
+    setBusy(false);
+  };
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(full);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="flex gap-2 mb-2">
+      <button
+        onClick={share}
+        disabled={busy}
+        className="flex-1 flex items-center justify-center gap-1.5 bg-green-600/80 hover:bg-green-500 disabled:opacity-60 text-white font-bold py-2.5 rounded-xl text-sm transition-all"
+      >
+        {busy ? "📸 Capturing…" : "📤 Share Results"}
+      </button>
+      <button
+        onClick={copy}
+        title="Copy text"
+        className="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-gray-300 text-sm transition-all border border-white/10"
+      >
+        {copied ? "✓" : "📋"}
+      </button>
+    </div>
+  );
+}
+
+function buildShareText(players: GameState["players"], teamsEnabled: boolean, teams: number[][]): string {
+  if (teamsEnabled && teams.length > 0) {
+    const teamResults = teams
+      .map((seats, ti) => {
+        const members = seats.map(s => players.find(p => p.seat === s)).filter(Boolean) as typeof players;
+        return { ti, members, score: members[0]?.total_score ?? 0 };
+      })
+      .sort((a, b) => b.score - a.score);
+    const winner = teamResults[0];
+    const lines = [`🃏 OpenSpades Results`, `🏆 ${winner.members.map(p => p.username).join(" & ")} win!`, ``];
+    teamResults.forEach(({ members, score }, i) => {
+      lines.push(`${i + 1}. ${members.map(p => p.username).join(" & ")}  ${score >= 0 ? "+" : ""}${score}`);
+    });
+    return lines.join("\n");
+  }
+  const sorted = [...players].sort((a, b) => b.total_score - a.total_score);
+  const lines = [`🃏 OpenSpades Results`, `🏆 ${sorted[0].username} wins!`, ``];
+  sorted.forEach((p, i) => lines.push(`${i + 1}. ${p.username}  ${p.total_score >= 0 ? "+" : ""}${p.total_score}`));
+  return lines.join("\n");
+}
+
 function GameOverBanner({
   players,
   teamsEnabled,
@@ -1912,6 +1992,9 @@ function GameOverBanner({
   onNewGame: () => void;
   onRematch: () => void;
 }) {
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const shareText = buildShareText(players, teamsEnabled, teams);
+
   if (teamsEnabled && teams.length > 0) {
     const teamResults = teams
       .map((seats, ti) => {
@@ -1926,6 +2009,7 @@ function GameOverBanner({
 
     return (
       <motion.div
+        ref={bannerRef}
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className="text-center bg-black/60 border border-yellow-500/30 rounded-2xl px-6 py-5 shadow-2xl max-w-sm w-full"
@@ -1957,6 +2041,7 @@ function GameOverBanner({
             );
           })}
         </div>
+        <ShareButton text={shareText} captureRef={bannerRef} />
         {isHost && (
           <button onClick={onRematch} className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-2.5 rounded-xl mb-2">
             🔄 Rematch (same config)
@@ -1994,6 +2079,7 @@ function GameOverBanner({
           </div>
         ))}
       </div>
+      <ShareButton text={buildShareText(players, teamsEnabled, teams)} />
       {isHost && (
         <button onClick={onRematch} className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-2.5 rounded-xl mb-2">
           🔄 Rematch (same config)
