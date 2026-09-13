@@ -604,7 +604,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             forced = self._get_forced_card(next_player.hand, trick.lead_suit if trick else "")
             if forced:
                 import asyncio
-                asyncio.create_task(self._server_auto_play(game.code, nxt, forced, delay=7))
+                asyncio.create_task(self._server_auto_play(game.code, nxt, forced, delay=5))
             return
 
         # ── Trick complete ──
@@ -653,7 +653,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 forced = self._get_forced_card(leader.hand, "")  # no lead suit yet
                 if forced:
                     import asyncio
-                    asyncio.create_task(self._server_auto_play(game_code, winner.seat, forced, delay=7))
+                    asyncio.create_task(self._server_auto_play(game_code, winner.seat, forced, delay=5))
         else:
             await self.end_round(game, fresh)
 

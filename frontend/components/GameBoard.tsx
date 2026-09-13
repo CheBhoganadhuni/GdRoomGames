@@ -342,7 +342,7 @@ export default function GameBoard({
   // Countdown + auto-play when a forced card is detected
   useEffect(() => {
     if (forcedCard && !trickWinner) {
-      setAutoplayCountdown(5);
+      setAutoplayCountdown(3);
       autoplayTimerRef.current = setInterval(() => {
         setAutoplayCountdown((prev) => {
           if (prev === null) return null;
