@@ -2036,29 +2036,29 @@ function GameOverBanner({
         ref={bannerRef}
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="text-center bg-black/60 border border-yellow-500/30 rounded-2xl px-6 py-5 shadow-2xl max-w-sm w-full"
+        className="text-center bg-[#0f2213] border border-yellow-500/20 rounded-2xl px-5 py-5 shadow-2xl max-w-sm w-full"
       >
-        <p className="text-4xl mb-2">🏆</p>
+        <p className="text-3xl mb-1">🏆</p>
         {declared && (
-          <div className="mb-3 px-4 py-2 rounded-xl bg-orange-500/20 border border-orange-400/50">
-            <p className="text-orange-300 text-sm font-extrabold uppercase tracking-widest">🏳️ Declared — Game Over</p>
-            <p className="text-orange-400/70 text-[11px] mt-0.5">Result was mathematically certain</p>
-          </div>
+          <p className="text-orange-400 text-[10px] font-bold uppercase tracking-widest mb-2">Declared ✦ Game Over</p>
         )}
-        <p className={`text-xl font-bold ${color.text}`}>Team {winner.ti + 1} wins!</p>
-        <p className="text-gray-400 text-xs mt-0.5 mb-4">
-          {winner.members.map((p) => p.username).join(" & ")} · {winner.score > 0 ? `+${winner.score}` : winner.score} pts
+        <p className={`text-xl font-bold ${color.text}`}>
+          {winner.members.map(p => p.username).join(" & ")} win!
         </p>
-        <div className="space-y-1.5 mb-5">
+        <p className="text-gray-500 text-xs mt-0.5 mb-3">
+          {winner.score > 0 ? `+${winner.score}` : winner.score} points
+        </p>
+        <div className="border-t border-white/10 pt-3 mb-4 space-y-1">
           {teamResults.map(({ ti, members, score }, rank) => {
             const c = TEAM_COLORS[ti % TEAM_COLORS.length];
             return (
-              <div key={ti} className={`flex justify-between text-sm px-3 py-1.5 rounded-lg ${c.bg} border ${c.border}`}>
-                <span className={c.text}>
-                  {rank + 1}. {members.map(p => p.username).join(" & ")}
+              <div key={ti} className="flex items-center text-sm px-1">
+                <span className="text-gray-600 text-xs w-4">{rank + 1}</span>
+                <span className={`flex-1 text-left pl-1 ${c.text}`}>
+                  {members.map(p => p.username).join(" & ")}
                   <BidAccuracyBadge usernames={members.map(p => p.username)} roundHistory={roundHistory} />
                 </span>
-                <span className={score >= 0 ? "text-emerald-400" : "text-red-400"}>
+                <span className={`font-semibold tabular-nums text-xs ${score >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                   {score > 0 ? `+${score}` : score}
                 </span>
               </div>
@@ -2066,16 +2066,20 @@ function GameOverBanner({
           })}
         </div>
         <ShareButton text={shareText} captureRef={bannerRef} />
-        {isHost && (
-          <button onClick={onRematch} className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-2.5 rounded-xl mb-2">
-            🔄 Rematch (same config)
+        <div className="flex gap-2 mt-1">
+          {isHost && (
+            <button onClick={onRematch}
+              className="flex-1 bg-[#1e3823] hover:bg-[#263f2c] text-emerald-400 font-semibold py-2.5 rounded-xl text-sm transition-colors">
+              🔄 Rematch
+            </button>
+          )}
+          <button onClick={onNewGame}
+            className={`${isHost ? "flex-1" : "w-full"} bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold py-2.5 rounded-xl text-sm transition-colors`}>
+            New Game →
           </button>
-        )}
-        <button onClick={onNewGame} className="w-full bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold py-2.5 rounded-xl">
-          New Game →
-        </button>
-        <p className="text-[10px] text-gray-700 mt-2">
-          Seat order: {[...players].sort((a, b) => a.seat - b.seat).map(p => `#${p.seat + 1} ${p.username}`).join(" · ")}
+        </div>
+        <p className="text-[10px] text-gray-700 mt-3">
+          {[...players].sort((a, b) => a.seat - b.seat).map(p => `#${p.seat + 1} ${p.username}`).join(" · ")}
         </p>
       </motion.div>
     );
@@ -2088,33 +2092,40 @@ function GameOverBanner({
       ref={bannerRef}
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      className="text-center bg-black/60 border border-yellow-500/30 rounded-2xl px-6 py-5 shadow-2xl max-w-sm w-full"
+      className="text-center bg-[#0f2213] border border-yellow-500/20 rounded-2xl px-5 py-5 shadow-2xl max-w-sm w-full"
     >
-      <p className="text-4xl mb-2">🏆</p>
-      {declared && <p className="text-orange-400 text-[11px] font-bold uppercase tracking-widest mb-1">Declared ✦ Game Over</p>}
+      <p className="text-3xl mb-1">🏆</p>
+      {declared && <p className="text-orange-400 text-[10px] font-bold uppercase tracking-widest mb-2">Declared ✦ Game Over</p>}
       <p className="text-yellow-400 text-xl font-bold">{winner.username} wins!</p>
-      <p className="text-gray-500 text-xs mt-0.5 mb-4">{winner.total_score} points</p>
-      <div className="space-y-1.5 mb-5">
+      <p className="text-gray-500 text-xs mt-0.5 mb-3">{winner.total_score} points</p>
+      <div className="border-t border-white/10 pt-3 mb-4 space-y-1">
         {sorted.map((p, i) => (
-          <div key={p.seat} className="flex justify-between text-sm text-gray-300 px-2">
-            <span>{i + 1}. {p.username}<BidAccuracyBadge usernames={[p.username]} roundHistory={roundHistory} /></span>
-            <span className={p.total_score >= 0 ? "text-emerald-400" : "text-red-400"}>
+          <div key={p.seat} className="flex items-center text-sm px-1">
+            <span className="text-gray-600 text-xs w-4">{i + 1}</span>
+            <span className="flex-1 text-left pl-1 text-gray-200">
+              {p.username}<BidAccuracyBadge usernames={[p.username]} roundHistory={roundHistory} />
+            </span>
+            <span className={`font-semibold tabular-nums text-xs ${p.total_score >= 0 ? "text-emerald-400" : "text-red-400"}`}>
               {p.total_score > 0 ? `+${p.total_score}` : p.total_score}
             </span>
           </div>
         ))}
       </div>
       <ShareButton text={buildShareText(players, teamsEnabled, teams)} captureRef={bannerRef} />
-      {isHost && (
-        <button onClick={onRematch} className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-2.5 rounded-xl mb-2">
-          🔄 Rematch (same config)
+      <div className="flex gap-2 mt-1">
+        {isHost && (
+          <button onClick={onRematch}
+            className="flex-1 bg-[#1e3823] hover:bg-[#263f2c] text-emerald-400 font-semibold py-2.5 rounded-xl text-sm transition-colors">
+            🔄 Rematch
+          </button>
+        )}
+        <button onClick={onNewGame}
+          className={`${isHost ? "flex-1" : "w-full"} bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold py-2.5 rounded-xl text-sm transition-colors`}>
+          New Game →
         </button>
-      )}
-      <button onClick={onNewGame} className="w-full bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold py-2.5 rounded-xl">
-        New Game →
-      </button>
-      <p className="text-[10px] text-gray-700 mt-2">
-        Seat order: {[...players].sort((a, b) => a.seat - b.seat).map(p => `#${p.seat + 1} ${p.username}`).join(" · ")}
+      </div>
+      <p className="text-[10px] text-gray-700 mt-3">
+        {[...players].sort((a, b) => a.seat - b.seat).map(p => `#${p.seat + 1} ${p.username}`).join(" · ")}
       </p>
     </motion.div>
   );
