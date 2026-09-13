@@ -1894,21 +1894,26 @@ function BidAccuracyBadge({ usernames, roundHistory }: {
 }
 
 function ShareButton({ text, captureRef }: { text: string; captureRef?: React.RefObject<HTMLDivElement | null> }) {
-  const [desktopCopied, setDesktopCopied] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [imgCopied, setImgCopied] = useState(false);
+  const [textCopied, setTextCopied] = useState(false);
   const imageBlobRef = useRef<Blob | undefined>(undefined);
   const imageFileRef = useRef<File | undefined>(undefined);
   const url  = "https://openspades.in";
   const full = `${text}\n\n🃏 Play free: ${url}`;
   const isMobile = typeof navigator !== "undefined" && /Mobi|Android/i.test(navigator.userAgent);
 
-  // Pre-capture image on mount so share() is synchronous (gesture-window safe)
+  // Pre-capture image on mount so share() is synchronous (gesture-window safe).
+  // Pass backgroundColor so Tailwind bg classes are honoured by html-to-image.
   useEffect(() => {
     if (!captureRef?.current) return;
     (async () => {
       try {
         const { toPng } = await import("html-to-image");
-        const dataUrl = await toPng(captureRef.current!, { cacheBust: true, pixelRatio: 2 });
+        const dataUrl = await toPng(captureRef.current!, {
+          cacheBust: true,
+          pixelRatio: 2,
+          backgroundColor: "#0f2213",
+        });
         const blob = await fetch(dataUrl).then(r => r.blob());
         imageBlobRef.current = blob;
         imageFileRef.current = new File([blob], "openspades-results.png", { type: "image/png" });
@@ -1916,60 +1921,73 @@ function ShareButton({ text, captureRef }: { text: string; captureRef?: React.Re
     })();
   }, [captureRef]);
 
-  const share = async () => {
+  // Mobile: native share sheet with image — user picks WhatsApp from the sheet
+  const shareOnMobile = () => {
+    if (!navigator.share) return;
     const imageFile = imageFileRef.current;
-
-    if (isMobile && navigator.share) {
-      // Mobile: native share sheet with image attached — user taps WhatsApp
-      const shareData: ShareData = { text: full };
-      if (imageFile && navigator.canShare?.({ files: [imageFile] })) {
-        shareData.files = [imageFile];
-      }
-      navigator.share(shareData).catch(() => {});
-      return;
+    const shareData: ShareData = { text: full };
+    if (imageFile && navigator.canShare?.({ files: [imageFile] })) {
+      shareData.files = [imageFile];
     }
+    navigator.share(shareData).catch(() => {});
+  };
 
-    // Desktop: copy screenshot to clipboard, open WhatsApp Web — user hits Cmd+V
+  // Desktop: copy screenshot PNG to clipboard
+  const copyImage = async () => {
     const blob = imageBlobRef.current;
-    if (blob && (navigator.clipboard as any)?.write) {
-      try {
-        await (navigator.clipboard as any).write([
-          new (window as any).ClipboardItem({ "image/png": blob }),
-        ]);
-        setDesktopCopied(true);
-        setTimeout(() => setDesktopCopied(false), 4000);
-      } catch { /* clipboard blocked — skip */ }
-    }
-    window.open("https://web.whatsapp.com/", "_blank");
+    if (!blob) return;
+    try {
+      await (navigator.clipboard as any).write([
+        new (window as any).ClipboardItem({ "image/png": blob }),
+      ]);
+      setImgCopied(true);
+      setTimeout(() => setImgCopied(false), 3000);
+    } catch { /* clipboard blocked */ }
   };
 
-  const copy = async () => {
+  const copyText = async () => {
     await navigator.clipboard.writeText(full);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTextCopied(true);
+    setTimeout(() => setTextCopied(false), 2000);
   };
+
+  const WASvg = () => (
+    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current flex-shrink-0">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.121 1.533 5.851L.057 23.57a.75.75 0 0 0 .92.921l5.82-1.474A11.946 11.946 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.75 9.75 0 0 1-4.928-1.337l-.353-.21-3.656.927.951-3.558-.228-.368A9.75 9.75 0 1 1 12 21.75z"/>
+    </svg>
+  );
 
   return (
     <div className="flex gap-2 mb-2 flex-col">
-      <div className="flex gap-2">
+      {isMobile ? (
         <button
-          onClick={share}
-          className="flex-1 flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-green-900/40"
+          onClick={shareOnMobile}
+          className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-green-900/40"
         >
-          <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.121 1.533 5.851L.057 23.57a.75.75 0 0 0 .92.921l5.82-1.474A11.946 11.946 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.75 9.75 0 0 1-4.928-1.337l-.353-.21-3.656.927.951-3.558-.228-.368A9.75 9.75 0 1 1 12 21.75z"/></svg>
+          <WASvg />
           Share on WhatsApp
         </button>
-        <button
-          onClick={copy}
-          title="Copy text"
-          className="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-gray-300 text-sm transition-all border border-white/10"
-        >
-          {copied ? "✓" : "📋"}
-        </button>
-      </div>
-      {desktopCopied && (
-        <p className="text-[11px] text-center text-yellow-400 animate-pulse">
-          📸 Screenshot copied! Paste it in WhatsApp with Cmd+V
+      ) : (
+        <div className="flex gap-2">
+          <button
+            onClick={copyImage}
+            className="flex-1 flex items-center justify-center gap-1.5 bg-white/10 hover:bg-white/15 text-white font-semibold py-2.5 rounded-xl text-sm transition-all border border-white/10"
+          >
+            {imgCopied ? "✅ Image copied!" : "📸 Copy image"}
+          </button>
+          <button
+            onClick={copyText}
+            title="Copy text"
+            className="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-gray-300 text-sm transition-all border border-white/10"
+          >
+            {textCopied ? "✓" : "📋"}
+          </button>
+        </div>
+      )}
+      {imgCopied && (
+        <p className="text-[11px] text-center text-yellow-400">
+          Paste in WhatsApp with Cmd+V
         </p>
       )}
     </div>
