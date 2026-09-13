@@ -5,7 +5,7 @@ import Card from "./Card";
 import Scoreboard from "./Scoreboard";
 import BidPanel from "./BidPanel";
 import RoundSummary from "./RoundSummary";
-import VoiceChat, { type VoiceChatHandle } from "./VoiceChat";
+import VoiceChat, { type VoiceChatHandle, usernameToUid } from "./VoiceChat";
 import type { GameState, Card as CardType, RoundScore } from "@/lib/types";
 import { TEAM_COLORS } from "@/lib/types";
 import type { ChatMessage, PeekStatus, TakeoverStatus } from "@/lib/useGameSocket";
@@ -582,12 +582,12 @@ export default function GameBoard({
                           <button
                             onClick={() => voiceChatRef.current?.toggleMuteUid(s.username)}
                             className={`text-[10px] border px-2 py-0.5 rounded transition-all ${
-                              voiceMutedUids.has(s.username)
+                              voiceMutedUids.has(String(usernameToUid(s.username)))
                                 ? "bg-red-500/20 border-red-500/40 text-red-400"
                                 : "border-white/10 text-gray-500 hover:text-gray-300"
                             }`}
                           >
-                            {voiceMutedUids.has(s.username) ? "🔇" : "🔊"}
+                            {voiceMutedUids.has(String(usernameToUid(s.username))) ? "🔇" : "🔊"}
                           </button>
                         )}
                         {isHost && (
@@ -1691,7 +1691,7 @@ function OtherPlayers({
           ? TEAM_COLORS[p.team_index % TEAM_COLORS.length]
           : null;
 
-        const isVoiceMuted = voiceIsLive && voiceMutedUids?.has(p.username);
+        const isVoiceMuted = voiceIsLive && voiceMutedUids?.has(String(usernameToUid(p.username)));
 
         return (
           <motion.div
@@ -1894,36 +1894,35 @@ function BidAccuracyBadge({ usernames, roundHistory }: {
 }
 
 function ShareButton({ text, captureRef }: { text: string; captureRef?: React.RefObject<HTMLDivElement | null> }) {
-  const [busy,   setBusy]   = useState(false);
   const [copied, setCopied] = useState(false);
+  const imageFileRef = useRef<File | undefined>(undefined);
   const url  = "https://openspades.in";
   const full = `${text}\n\n🃏 Play free: ${url}`;
 
-  const share = async () => {
-    if (busy) return;
-    setBusy(true);
-    let imageFile: File | undefined;
-
-    if (captureRef?.current) {
+  // Pre-capture image eagerly so share() stays synchronous (gesture window safe)
+  useEffect(() => {
+    if (!captureRef?.current) return;
+    (async () => {
       try {
         const { toPng } = await import("html-to-image");
-        const dataUrl = await toPng(captureRef.current, { cacheBust: true, pixelRatio: 2 });
-        const blob    = await fetch(dataUrl).then(r => r.blob());
-        imageFile = new File([blob], "openspades-results.png", { type: "image/png" });
-      } catch { /* ignore — fall back to text-only */ }
-    }
+        const dataUrl = await toPng(captureRef.current!, { cacheBust: true, pixelRatio: 2 });
+        const blob = await fetch(dataUrl).then(r => r.blob());
+        imageFileRef.current = new File([blob], "openspades-results.png", { type: "image/png" });
+      } catch { /* ignore — text-only fallback */ }
+    })();
+  }, [captureRef]);
 
+  const share = () => {
+    const imageFile = imageFileRef.current;
     const shareData: ShareData = { text: full };
     if (imageFile && navigator.canShare?.({ files: [imageFile] })) {
       shareData.files = [imageFile];
     }
-
     if (navigator.share) {
-      try { await navigator.share(shareData); setBusy(false); return; } catch { /* cancelled */ }
+      navigator.share(shareData).catch(() => {});
+      return;
     }
-    // Desktop fallback — WhatsApp Web with text
     window.open(`https://wa.me/?text=${encodeURIComponent(full)}`, "_blank");
-    setBusy(false);
   };
 
   const copy = async () => {
@@ -1936,10 +1935,9 @@ function ShareButton({ text, captureRef }: { text: string; captureRef?: React.Re
     <div className="flex gap-2 mb-2">
       <button
         onClick={share}
-        disabled={busy}
-        className="flex-1 flex items-center justify-center gap-1.5 bg-green-600/80 hover:bg-green-500 disabled:opacity-60 text-white font-bold py-2.5 rounded-xl text-sm transition-all"
+        className="flex-1 flex items-center justify-center gap-1.5 bg-green-600/80 hover:bg-green-500 text-white font-bold py-2.5 rounded-xl text-sm transition-all"
       >
-        {busy ? "📸 Capturing…" : "📤 Share Results"}
+        📤 Share Results
       </button>
       <button
         onClick={copy}
@@ -2061,6 +2059,7 @@ function GameOverBanner({
   const winner = sorted[0];
   return (
     <motion.div
+      ref={bannerRef}
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       className="text-center bg-black/60 border border-yellow-500/30 rounded-2xl px-6 py-5 shadow-2xl max-w-sm w-full"
@@ -2079,7 +2078,7 @@ function GameOverBanner({
           </div>
         ))}
       </div>
-      <ShareButton text={buildShareText(players, teamsEnabled, teams)} />
+      <ShareButton text={buildShareText(players, teamsEnabled, teams)} captureRef={bannerRef} />
       {isHost && (
         <button onClick={onRematch} className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-2.5 rounded-xl mb-2">
           🔄 Rematch (same config)

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHand
 
 // Deterministic Agora UID from username so we can reverse-lookup by name.
 // djb2 hash clamped to positive 32-bit int (Agora valid range: 1..2^32-1).
-function usernameToUid(name: string): number {
+export function usernameToUid(name: string): number {
   let h = 5381;
   for (let i = 0; i < name.length; i++) {
     h = ((h << 5) + h + name.charCodeAt(i)) & 0x7fffffff;
@@ -54,12 +54,12 @@ const VoiceChat = forwardRef<VoiceChatHandle, Props>(function VoiceChat(
       const track = audioTracksRef.current.get(uid);
       setMutedUids(prev => {
         const next = new Set(prev);
-        if (next.has(targetUsername)) {
+        if (next.has(uid)) {
           track?.play();
-          next.delete(targetUsername);
+          next.delete(uid);
         } else {
           track?.stop();
-          next.add(targetUsername);
+          next.add(uid);
         }
         return next;
       });
