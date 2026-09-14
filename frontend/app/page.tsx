@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 
 const SUITS = ["♠", "♥", "♦", "♣"];
@@ -52,8 +53,7 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-4"
-      style={{ background: "radial-gradient(ellipse at center,#1a4731 0%,#0d2b1e 60%,#091a12 100%)" }}
+      className="table-bg min-h-screen flex flex-col items-center justify-center p-4"
       suppressHydrationWarning
     >
       {/* Floating suit decorations */}
@@ -73,7 +73,7 @@ export default function Home() {
         <h1 className="text-6xl font-extrabold text-yellow-400 tracking-tight drop-shadow-2xl">
           ♠ OpenSpades
         </h1>
-        <p className="text-gray-400 mt-2 text-lg">Judgment · for the batch</p>
+        <p className="text-gray-400 mt-2 text-lg">Free multiplayer Spades with voice chat</p>
       </motion.div>
 
       <motion.div
@@ -116,6 +116,13 @@ export default function Home() {
           </motion.button>
         </form>
       </motion.div>
+
+      <Link
+        href="/how-to-play"
+        className="text-gray-400 hover:text-yellow-400 text-sm mt-6 relative z-10 underline underline-offset-4 transition-colors"
+      >
+        New here? Learn how to play →
+      </Link>
 
       <p className="text-gray-700 text-xs mt-8 relative z-10">Only for the batch 🃏</p>
     </div>

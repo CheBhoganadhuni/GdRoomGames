@@ -242,10 +242,7 @@ export default function LobbyPage() {
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-4"
-      style={{ background: "radial-gradient(ellipse at center,#1a4731 0%,#0d2b1e 60%,#091a12 100%)" }}
-    >
+    <div className="table-bg min-h-screen flex flex-col items-center justify-center p-4">
       {/* Logo */}
       <motion.div initial={{ y: -18, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-center mb-7">
         <h1 className="text-4xl font-extrabold text-yellow-400 tracking-tight">♠ OpenSpades</h1>

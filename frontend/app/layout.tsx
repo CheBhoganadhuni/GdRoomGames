@@ -5,8 +5,24 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "OpenSpades — Hostel Card Game",
-  description: "Play Judgment with your crew",
+  metadataBase: new URL("https://openspades.in"),
+  title: "OpenSpades: Free Multiplayer Spades with Voice Chat",
+  description:
+    "Play Spades online free with friends. Create a room, share the code, and talk over live voice chat. No signup, no app install.",
+  openGraph: {
+    title: "OpenSpades: Free Multiplayer Spades with Voice Chat",
+    description:
+      "Play Spades online free with friends. Create a room, share the code, and talk over live voice chat. No signup, no app install.",
+    url: "https://openspades.in",
+    siteName: "OpenSpades",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "OpenSpades: Free Multiplayer Spades with Voice Chat",
+    description: "Play Spades online free with friends, with live voice chat.",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

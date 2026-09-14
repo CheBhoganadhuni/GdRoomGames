@@ -172,7 +172,7 @@ export default function GameBoard({
       if (sfxOn) sfxYourTurn();
       // Tab notification only if tab not focused
       if (document.hidden && typeof Notification !== "undefined" && Notification.permission === "granted") {
-        new Notification("OpenSpades — your turn! 🃏", {
+        new Notification("OpenSpades: your turn! 🃏", {
           body: state.status === "bidding" ? "Place your bid" : "Play a card",
           icon: "/favicon.ico",
           tag: "your-turn",
