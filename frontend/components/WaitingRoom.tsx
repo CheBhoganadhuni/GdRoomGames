@@ -116,6 +116,10 @@ export default function WaitingRoom({ state, username, gameCode, onStartGame, on
     });
   }
 
+  const whatsappShareText = encodeURIComponent(
+    `🃏 Join my OpenSpades game!\n\nRoom Code: ${gameCode}\n\nPlay free, no signup: https://openspades.in`
+  );
+
   // Build seat slots 0…expected-1
   const seats    = Array.from({ length: expected }, (_, i) => ({
     seat: i,
@@ -142,7 +146,7 @@ export default function WaitingRoom({ state, username, gameCode, onStartGame, on
         className="bg-black/50 border border-white/10 rounded-2xl px-6 py-4 text-center w-full max-w-sm shadow-xl"
       >
         <p className="text-gray-500 text-[11px] uppercase tracking-widest mb-1">Room Code</p>
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-2">
           <span className="text-3xl font-black font-mono text-white tracking-[0.35em]">{gameCode}</span>
           <motion.button
             whileTap={{ scale: 0.93 }}
@@ -151,6 +155,18 @@ export default function WaitingRoom({ state, username, gameCode, onStartGame, on
           >
             {copied ? "✓ Copied!" : "Copy"}
           </motion.button>
+          <motion.a
+            whileTap={{ scale: 0.93 }}
+            href={`https://wa.me/?text=${whatsappShareText}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Share room code on WhatsApp"
+            className="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 transition-all"
+          >
+            <svg viewBox="0 0 32 32" width="18" height="18" fill="#25D366" aria-hidden="true">
+              <path d="M16.004 2.667c-7.364 0-13.333 5.97-13.333 13.333 0 2.352.615 4.646 1.783 6.665L2.667 29.333l6.83-1.76a13.27 13.27 0 0 0 6.507 1.76h.006c7.364 0 13.333-5.97 13.333-13.333s-5.975-13.333-13.339-13.333zm0 24.4a11.04 11.04 0 0 1-5.63-1.541l-.404-.24-4.053 1.045 1.083-3.953-.264-.406a11.03 11.03 0 0 1-1.7-5.892c0-6.106 4.966-11.072 11.074-11.072 2.958 0 5.738 1.153 7.83 3.246a11 11 0 0 1 3.24 7.834c0 6.107-4.965 11.073-11.076 11.073v-.094zm6.074-8.294c-.333-.167-1.968-.973-2.273-1.083-.305-.11-.527-.166-.75.167-.222.333-.86 1.083-1.055 1.305-.194.222-.388.25-.72.083-.333-.167-1.406-.518-2.678-1.652-.99-.884-1.66-1.977-1.854-2.31-.194-.333-.02-.513.146-.68.15-.15.333-.389.5-.583.166-.194.222-.333.333-.556.11-.222.055-.417-.028-.583-.083-.167-.75-1.807-1.028-2.474-.27-.65-.545-.562-.75-.573-.194-.01-.417-.012-.639-.012-.222 0-.583.083-.888.417-.305.333-1.166 1.139-1.166 2.778 0 1.639 1.194 3.222 1.361 3.444.166.222 2.351 3.59 5.695 5.035.796.343 1.417.548 1.901.702.799.254 1.526.218 2.101.132.641-.096 1.968-.804 2.245-1.582.278-.777.278-1.444.194-1.583-.083-.139-.305-.222-.638-.389z" />
+            </svg>
+          </motion.a>
         </div>
         <p className="text-gray-600 text-xs mt-2">Share this code with your friends</p>
       </motion.div>

@@ -118,7 +118,7 @@ def gen_code():
             return code
 
 
-STALE_WAITING_HOURS = 6
+STALE_WAITING_HOURS = 1
 
 
 def cleanup_stale_waiting_games():
@@ -126,7 +126,8 @@ def cleanup_stale_waiting_games():
 
     Runs opportunistically on room creation instead of a separate cron job —
     bounds unbounded growth from spam/abuse without needing extra infra.
-    Real hosts start their game the same session, so 6h is a safe cutoff.
+    Real hosts start their game within minutes of sharing the code, so 1h
+    is generous slack while still keeping the abuse window tight.
     """
     cutoff = timezone.now() - timedelta(hours=STALE_WAITING_HOURS)
     Game.objects.filter(status="waiting", created_at__lt=cutoff).delete()
