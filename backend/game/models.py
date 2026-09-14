@@ -43,6 +43,7 @@ class Game(models.Model):
     resume_snapshot = models.JSONField(null=True, blank=True, default=None)
     declared        = models.BooleanField(default=False)  # game ended by mathematical certainty
     created_at     = models.DateTimeField(auto_now_add=True)
+    updated_at     = models.DateTimeField(auto_now=True, null=True)
 
     def __str__(self):
         return f"Game {self.code} ({self.status})"

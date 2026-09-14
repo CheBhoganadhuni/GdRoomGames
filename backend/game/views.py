@@ -118,19 +118,23 @@ def gen_code():
             return code
 
 
-STALE_WAITING_HOURS = 1
+STALE_MINUTES = 30
 
 
-def cleanup_stale_waiting_games():
-    """Delete rooms that never started and have sat in 'waiting' too long.
+def cleanup_stale_games():
+    """Delete rooms that are either abandoned or long done being looked at.
 
     Runs opportunistically on room creation instead of a separate cron job —
     bounds unbounded growth from spam/abuse without needing extra infra.
-    Real hosts start their game within minutes of sharing the code, so 1h
-    is generous slack while still keeping the abuse window tight.
+    Covers two cases, both keyed off `updated_at` (bumped by any save(),
+    including every bid/card/status change — so an active game is never
+    touched, only ones nobody's interacted with in a while):
+      - "waiting": never started. Real hosts start within minutes.
+      - "finished": game's over. 30 min is plenty of time to screenshot the
+        results/scoreboard before it's swept away.
     """
-    cutoff = timezone.now() - timedelta(hours=STALE_WAITING_HOURS)
-    Game.objects.filter(status="waiting", created_at__lt=cutoff).delete()
+    cutoff = timezone.now() - timedelta(minutes=STALE_MINUTES)
+    Game.objects.filter(status__in=["waiting", "finished"], updated_at__lt=cutoff).delete()
 
 
 class CreateGameView(APIView):
@@ -139,7 +143,7 @@ class CreateGameView(APIView):
     throttle_scope = "create_game"
 
     def post(self, request):
-        cleanup_stale_waiting_games()
+        cleanup_stale_games()
 
         username         = request.data.get("username", "").strip()[:50]
         num_decks        = max(1, min(2, int(request.data.get("num_decks", 1))))

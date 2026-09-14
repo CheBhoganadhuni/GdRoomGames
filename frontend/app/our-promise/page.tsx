@@ -82,7 +82,7 @@ export default function OurPromise() {
             on WhatsApp, no bots, no support ticket.
           </p>
           <a
-            href="https://wa.me/917075687685?text=Hi!%20I%20have%20a%20question%20about%20OpenSpades%20%F0%9F%83%8F"
+            href="https://wa.me/917075687685?text=Hi!%20I%20have%20a%20question%20about%20OpenSpades%20%E2%9D%A4%EF%B8%8F"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 rounded-full px-5 py-2.5 transition-colors"

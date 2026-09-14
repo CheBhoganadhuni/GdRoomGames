@@ -117,7 +117,7 @@ export default function WaitingRoom({ state, username, gameCode, onStartGame, on
   }
 
   const whatsappShareText = encodeURIComponent(
-    `🃏 Join my OpenSpades game!\n\nRoom Code: ${gameCode}\n\nPlay free, no signup: https://openspades.in`
+    `❤️ Join my OpenSpades game!\n\nRoom Code: ${gameCode}\n\nPlay free, no signup: https://openspades.in`
   );
 
   // Build seat slots 0…expected-1
