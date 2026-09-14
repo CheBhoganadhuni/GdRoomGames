@@ -3,6 +3,8 @@ import os
 import secrets
 import string
 import time
+from datetime import timedelta
+from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -116,12 +118,28 @@ def gen_code():
             return code
 
 
+STALE_WAITING_HOURS = 6
+
+
+def cleanup_stale_waiting_games():
+    """Delete rooms that never started and have sat in 'waiting' too long.
+
+    Runs opportunistically on room creation instead of a separate cron job —
+    bounds unbounded growth from spam/abuse without needing extra infra.
+    Real hosts start their game the same session, so 6h is a safe cutoff.
+    """
+    cutoff = timezone.now() - timedelta(hours=STALE_WAITING_HOURS)
+    Game.objects.filter(status="waiting", created_at__lt=cutoff).delete()
+
+
 class CreateGameView(APIView):
     permission_classes = [AllowAny]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "create_game"
 
     def post(self, request):
+        cleanup_stale_waiting_games()
+
         username         = request.data.get("username", "").strip()[:50]
         num_decks        = max(1, min(2, int(request.data.get("num_decks", 1))))
         expected_players = max(2, min(8, int(request.data.get("expected_players", 4))))
