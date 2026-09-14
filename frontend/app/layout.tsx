@@ -29,6 +29,9 @@ export const metadata: Metadata = {
   verification: {
     google: "nsL16cEau3DfvLgZkPH09-jlKbAJAxqc52UsISPansQ",
   },
+  other: {
+    "google-adsense-account": "ca-pub-2575005104155492",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
