@@ -248,9 +248,17 @@ export default function LobbyPage() {
       <motion.div initial={{ y: -18, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-center mb-7">
         <h1 className="text-4xl font-extrabold text-yellow-400 tracking-tight">♠ OpenSpades</h1>
         {username && (
-          <p className="text-gray-400 mt-1 text-sm">
-            Hey <span className="text-white font-semibold">{username}</span> 👋
-          </p>
+          <>
+            <p className="text-gray-400 mt-1 text-sm">
+              Hey <span className="text-white font-semibold">{username}</span> 👋
+            </p>
+            <button
+              onClick={() => { localStorage.removeItem("os_username"); router.push("/"); }}
+              className="text-gray-400 hover:text-white text-xs mt-1.5 underline underline-offset-2 transition-colors"
+            >
+              ← Change name
+            </button>
+          </>
         )}
       </motion.div>
 
@@ -670,14 +678,7 @@ export default function LobbyPage() {
         )}
       </motion.div>
 
-      <button
-        onClick={() => { localStorage.removeItem("os_username"); router.push("/"); }}
-        className="text-gray-700 hover:text-gray-500 text-xs mt-5 transition-colors"
-      >
-        ← Change name
-      </button>
-
-      <div className="mt-4">
+      <div className="mt-5">
         <PromiseBanner />
       </div>
 
