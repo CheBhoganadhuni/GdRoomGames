@@ -120,12 +120,13 @@ export default function Home() {
 
       <Link
         href="/how-to-play"
-        className="text-gray-400 hover:text-yellow-400 text-sm mt-6 relative z-10 underline underline-offset-4 transition-colors"
+        className="relative z-10 mt-6 flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/15 rounded-full px-5 py-2.5 text-white text-sm font-semibold transition-colors"
       >
-        New here? Learn how to play →
+        📖 New here? Learn how to play
+        <span>→</span>
       </Link>
 
-      <div className="mt-6 relative z-10">
+      <div className="mt-3 relative z-10">
         <PromiseBanner />
       </div>
     </div>
