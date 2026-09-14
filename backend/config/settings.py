@@ -70,4 +70,10 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
     "UNAUTHENTICATED_USER": None,  # No django.contrib.auth in INSTALLED_APPS
+    # Per-IP throttling — no auth on this API, so anon rate is the only rate.
+    # Uses Django's default LocMemCache, which matches the existing single-process
+    # Daphne assumption (see CHANNEL_LAYERS above); switch to a shared cache
+    # (Redis) if this ever scales to multiple worker processes.
+    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
+    "DEFAULT_THROTTLE_RATES": {"anon": "60/min", "create_game": "10/min"},
 }

@@ -1,4 +1,5 @@
 import json
+import time
 from urllib.parse import parse_qs
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
@@ -32,12 +33,19 @@ def find_next_idx(current: int, n: int, predicate) -> int:
 # ── Consumer ──────────────────────────────────────────────────────────────────
 
 class GameConsumer(AsyncWebsocketConsumer):
+    # Per-connection flood guard: drop messages once too many land in the
+    # rolling window, and disconnect a client that keeps hitting it.
+    RATE_WINDOW_SECS  = 5
+    RATE_MAX_MESSAGES = 25
+    RATE_MAX_VIOLATIONS = 5
 
     async def connect(self):
         self.game_code  = self.scope["url_route"]["kwargs"]["game_code"]
         self.room_group = f"game_{self.game_code}"
         self.username   = "Anonymous"
         self.is_spec    = False
+        self._msg_times = []
+        self._violations = 0
         qs = parse_qs(self.scope.get("query_string", b"").decode())
         self.username   = (qs.get("username", ["Anonymous"])[0])[:50].strip() or "Anonymous"
         spectate_seat   = qs.get("spectate", [None])[0]
@@ -75,7 +83,19 @@ class GameConsumer(AsyncWebsocketConsumer):
             pass
 
     async def receive(self, text_data):
-        data = json.loads(text_data)
+        now = time.monotonic()
+        self._msg_times = [t for t in self._msg_times if now - t <= self.RATE_WINDOW_SECS]
+        self._msg_times.append(now)
+        if len(self._msg_times) > self.RATE_MAX_MESSAGES:
+            self._violations += 1
+            if self._violations > self.RATE_MAX_VIOLATIONS:
+                await self.close(4029)  # policy violation: rate limited
+            return  # drop this message, connection stays open (unless above)
+
+        try:
+            data = json.loads(text_data)
+        except (json.JSONDecodeError, TypeError):
+            return
         handlers = {
             "start_game":       self.handle_start_game,
             "place_bid":        self.handle_place_bid,

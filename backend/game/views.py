@@ -1,12 +1,13 @@
 import json
 import os
-import random
+import secrets
 import string
 import time
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from rest_framework.throttling import ScopedRateThrottle
 from .models import Game, Player, BidLog, TrickCard
 from . import engine
 from .serializers import GameSerializer
@@ -110,13 +111,15 @@ def parse_snapshot(content: str) -> dict:
 
 def gen_code():
     while True:
-        code = "".join(random.choices(string.ascii_uppercase, k=6))
+        code = "".join(secrets.choice(string.ascii_uppercase) for _ in range(6))
         if not Game.objects.filter(code=code).exists():
             return code
 
 
 class CreateGameView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "create_game"
 
     def post(self, request):
         username         = request.data.get("username", "").strip()[:50]
@@ -338,26 +341,6 @@ class RoundHistoryView(APIView):
             rounds.append({"round": rnum, "scores": scores})
 
         return Response(rounds)
-
-
-class ListWaitingGamesView(APIView):
-    """Return all games currently in the waiting (lobby) stage."""
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        games = Game.objects.filter(status="waiting").order_by("-created_at")
-        result = []
-        for g in games:
-            players = list(g.players.order_by("seat").values_list("username", flat=True))
-            result.append({
-                "code":             g.code,
-                "host":             g.host_username,
-                "expected_players": g.expected_players,
-                "joined":           len(players),
-                "players":          players,
-                "teams_enabled":    g.teams_enabled,
-            })
-        return Response(result)
 
 
 class AgoraTokenView(APIView):
