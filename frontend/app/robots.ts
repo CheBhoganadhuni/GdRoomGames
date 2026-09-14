@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/lobby", "/game/"],
       },
     ],
-    sitemap: "https://openspades.in/sitemap.xml",
+    sitemap: "https://www.openspades.in/sitemap.xml",
   };
 }

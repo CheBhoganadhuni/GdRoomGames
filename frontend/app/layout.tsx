@@ -5,15 +5,18 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://openspades.in"),
+  metadataBase: new URL("https://www.openspades.in"),
   title: "OpenSpades: Free Multiplayer Spades with Voice Chat",
   description:
     "Play Spades online free with friends. Create a room, share the code, and talk over live voice chat. No signup, no app install.",
+  alternates: {
+    canonical: "https://www.openspades.in",
+  },
   openGraph: {
     title: "OpenSpades: Free Multiplayer Spades with Voice Chat",
     description:
       "Play Spades online free with friends. Create a room, share the code, and talk over live voice chat. No signup, no app install.",
-    url: "https://openspades.in",
+    url: "https://www.openspades.in",
     siteName: "OpenSpades",
     locale: "en_IN",
     type: "website",
