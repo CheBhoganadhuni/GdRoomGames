@@ -23,6 +23,9 @@ export const metadata: Metadata = {
     title: "OpenSpades: Free Multiplayer Spades with Voice Chat",
     description: "Play Spades online free with friends, with live voice chat.",
   },
+  verification: {
+    google: "nsL16cEau3DfvLgZkPH09-jlKbAJAxqc52UsISPansQ",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
