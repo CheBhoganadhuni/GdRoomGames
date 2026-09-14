@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import PromiseBanner from "@/components/PromiseBanner";
 
 const SUITS = ["♠", "♥", "♦", "♣"];
 
@@ -124,7 +125,9 @@ export default function Home() {
         New here? Learn how to play →
       </Link>
 
-      <p className="text-gray-700 text-xs mt-8 relative z-10">Only for the batch 🃏</p>
+      <div className="mt-6 relative z-10">
+        <PromiseBanner />
+      </div>
     </div>
   );
 }

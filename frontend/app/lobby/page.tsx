@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
+import PromiseBanner from "@/components/PromiseBanner";
 
 type Tab = "create" | "join" | "resume";
 
@@ -675,6 +676,10 @@ export default function LobbyPage() {
       >
         ← Change name
       </button>
+
+      <div className="mt-4">
+        <PromiseBanner />
+      </div>
 
       {/* Spectator player picker overlay */}
       <AnimatePresence>
