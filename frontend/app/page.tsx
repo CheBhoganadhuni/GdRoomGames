@@ -71,10 +71,10 @@ export default function Home() {
       ))}
 
       <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-center mb-10 relative z-10">
-        <h1 className="text-6xl font-extrabold text-yellow-400 tracking-tight drop-shadow-2xl">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-yellow-400 tracking-tight drop-shadow-2xl">
           ♠ OpenSpades
         </h1>
-        <p className="text-gray-400 mt-2 text-lg">Free multiplayer Spades with voice chat</p>
+        <p className="text-gray-400 mt-2 text-sm sm:text-base md:text-lg px-4">Free multiplayer Spades with voice chat</p>
       </motion.div>
 
       <motion.div
