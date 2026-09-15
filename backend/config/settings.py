@@ -28,14 +28,33 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # Canonical Django ordering — SessionMiddleware before CommonMiddleware,
+    # CsrfViewMiddleware before AuthenticationMiddleware. The previous version
+    # of this list was missing CsrfViewMiddleware entirely (admin login's
+    # view-level @csrf_protect decorator still ran and rejected every
+    # submission, since there was no cookie for it to validate against) and
+    # had Session/Auth/Message tacked on at the end in the wrong order.
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
-    # Session/auth/messages — required for /admin/ login, nothing else uses them.
-    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+]
+
+# Render (and Cloudflare in front of it) terminates TLS before the request
+# reaches Daphne, so without this Django thinks every request is plain HTTP
+# — which breaks CSRF's origin/scheme check specifically on HTTPS admin
+# form submissions (this was the actual cause of the CSRF failure above).
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://gdroomgames.onrender.com",
+    "https://api.openspades.in",
+    "https://openspades.in",
+    "https://www.openspades.in",
 ]
 
 ROOT_URLCONF = "config.urls"
