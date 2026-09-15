@@ -39,8 +39,12 @@ def trigger_full_backup_export() -> tuple[bool, str]:
             f"https://api.telegram.org/bot{token}/sendDocument",
             data={
                 "chat_id": chat_id,
-                "caption": f"💾 *OpenSpades Full Backup*\n{stamp}\nSize: {len(content) // 1024} KB",
-                "parse_mode": "Markdown",
+                # Plain text, no parse_mode — the timestamp's underscores
+                # broke Telegram's Markdown entity parser (unpaired "_"
+                # reads as an unterminated italics span), rejecting the
+                # whole message. Not worth fighting Markdown escaping for
+                # a caption that doesn't need formatting anyway.
+                "caption": f"OpenSpades Full Backup\n{stamp}\nSize: {len(content) // 1024} KB",
             },
             files={"document": (filename, content.encode("utf-8"), "application/json")},
             timeout=30,

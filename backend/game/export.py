@@ -103,8 +103,12 @@ def send_snapshot_to_telegram(snap: dict):
             f"https://api.telegram.org/bot{token}/sendDocument",
             data={
                 "chat_id":    chat_id,
-                "caption":    f"🃏 *OpenSpades Snapshot*\nCode: `{game_code}` · R{snap['current_round']}/{snap['max_rounds']}\nPlayers: {players}",
-                "parse_mode": "Markdown",
+                # No parse_mode — usernames are free-text with no character
+                # restrictions, so an underscore/asterisk/backtick in a
+                # player's name would break Telegram's Markdown entity
+                # parser (same bug just found and fixed in backup.py) and
+                # silently drop the whole export.
+                "caption":    f"OpenSpades Snapshot\nCode: {game_code} - R{snap['current_round']}/{snap['max_rounds']}\nPlayers: {players}",
             },
             files={"document": (filename, content.encode("utf-8"), "application/json")},
             timeout=15,
