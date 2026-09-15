@@ -289,29 +289,7 @@ class HealthCheckView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        self._maybe_trigger_scheduled_backup()
         return Response({"status": "ok"}, status=status.HTTP_200_OK)
-
-    def _maybe_trigger_scheduled_backup(self):
-        """Piggyback on the health check the frontend already pings every
-        8 minutes to keep the free-tier instance warm — no Render Cron Job
-        needed (that requires a card on file even on the cheapest plan).
-        Set BACKUP_TRIGGER_DATE ("YYYY-MM-DD") whenever a database's free
-        30-day window is about to expire; this fires itself exactly once
-        that day, from inside the app, independent of any external
-        scheduler staying alive. Reset the env var to a new date next time
-        a database gets recreated — no code change needed.
-        """
-        target = os.environ.get("BACKUP_TRIGGER_DATE", "")
-        if not target or timezone.now().date().isoformat() != target:
-            return
-        already_sent_today = Event.objects.filter(
-            event_type="full_backup_sent", created_at__date=timezone.now().date()
-        ).exists()
-        if already_sent_today:
-            return
-        ok, message = trigger_full_backup_export()
-        Event.objects.create(event_type="full_backup_sent", meta={"success": ok, "message": message})
 
 
 class ResumeFromExportView(APIView):
