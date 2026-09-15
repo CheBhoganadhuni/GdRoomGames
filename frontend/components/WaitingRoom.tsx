@@ -12,6 +12,7 @@ interface Props {
   onStartGame: (overrides?: GameStartOverrides) => void;
   onCancelGame: () => void;
   onKickPlayer: (targetUsername: string) => void;
+  onLeaveGame: () => void;
 }
 
 function previewTeams(order: string[], mode: "pairs" | "3v3" = "pairs"): string[][] {
@@ -26,7 +27,7 @@ function previewTeams(order: string[], mode: "pairs" | "3v3" = "pairs"): string[
   return Array.from({ length: half }, (_, i) => [order[i], order[i + half]].filter(Boolean));
 }
 
-export default function WaitingRoom({ state, username, gameCode, onStartGame, onCancelGame, onKickPlayer }: Props) {
+export default function WaitingRoom({ state, username, gameCode, onStartGame, onCancelGame, onKickPlayer, onLeaveGame }: Props) {
   const [copied,            setCopied]            = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showControls,      setShowControls]      = useState(false);
@@ -494,7 +495,7 @@ export default function WaitingRoom({ state, username, gameCode, onStartGame, on
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => router.push("/")}
+              onClick={() => { onLeaveGame(); router.push("/"); }}
               className="text-xs px-5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-gray-500 hover:text-gray-300 font-semibold transition-all"
             >
               ← Leave Room

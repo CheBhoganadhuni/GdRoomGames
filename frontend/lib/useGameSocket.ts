@@ -215,6 +215,7 @@ export function useGameSocket(gameCode: string, username: string, spectateSeat?:
   }), [send]);
   const cancelGame   = useCallback(() => send({ action: "cancel_game" }), [send]);
   const kickPlayer       = useCallback((targetUsername: string) => send({ action: "kick_player", target_username: targetUsername }), [send]);
+  const leaveGame        = useCallback(() => send({ action: "leave_game" }), [send]);
   const kickSpectator    = useCallback((spectatorUsername: string) => send({ action: "kick_spectator", spectator_username: spectatorUsername }), [send]);
   const swapBidCaptain   = useCallback((targetSeat: number) => send({ action: "swap_bid_captain", target_seat: targetSeat }), [send]);
   const placeBid     = useCallback((bid: number) => send({ action: "place_bid", bid }), [send]);
@@ -274,6 +275,7 @@ export function useGameSocket(gameCode: string, username: string, spectateSeat?:
     startGame,
     cancelGame,
     kickPlayer,
+    leaveGame,
     kickSpectator,
     swapBidCaptain,
     placeBid,

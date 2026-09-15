@@ -109,6 +109,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             "accept_peek":      self.handle_accept_peek,
             "decline_peek":     self.handle_decline_peek,
             "kick_player":      self.handle_kick_player,
+            "leave_game":       self.handle_leave_game,
             "request_takeover": self.handle_request_takeover,
             "accept_takeover":  self.handle_accept_takeover,
             "decline_takeover": self.handle_decline_takeover,
@@ -236,6 +237,17 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.room_group, {"type": "player_kicked_msg", "username": target}
             )
+            await self.broadcast_state()
+
+    async def handle_leave_game(self, data):
+        game = await self.get_game()
+        if game.status != Game.STATUS_WAITING or self.username == game.host_username:
+            return
+        left = await self.db_kick_player(game, self.username)
+        if left:
+            # No player_kicked_msg here — that broadcast drives the "You were
+            # kicked" screen, which would be wrong for someone leaving on
+            # their own. Just re-sync everyone else's player list.
             await self.broadcast_state()
 
     async def handle_kick_spectator(self, data):
