@@ -260,6 +260,19 @@ function LobbyPageInner() {
     router.push(`/game/${spectateGame.code}?takeover=${seat}`);
   }
 
+  // Covers two cases with one guard: still checking localStorage on mount,
+  // and (no saved name) actively redirecting away. Either way, showing the
+  // real join/create form here would be a lie — nothing's clickable yet,
+  // and a click during this window would silently no-op since api calls
+  // below all bail out when username is falsy.
+  if (!username) {
+    return (
+      <div className="table-bg min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gray-500 border-t-yellow-400 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="table-bg min-h-screen flex flex-col items-center justify-center p-4">
       {/* Logo */}
