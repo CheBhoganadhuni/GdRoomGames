@@ -81,7 +81,7 @@ export default function Home() {
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="bg-gray-900/80 backdrop-blur border border-white/10 rounded-2xl p-8 w-full max-w-sm shadow-2xl relative z-10"
+        className="bg-gray-900/92 backdrop-blur border border-white/10 rounded-2xl p-8 w-full max-w-sm shadow-2xl relative z-10"
       >
         <p className="text-gray-300 text-center mb-6 text-sm">What should we call you tonight?</p>
         <form onSubmit={enter} className="flex flex-col gap-4">

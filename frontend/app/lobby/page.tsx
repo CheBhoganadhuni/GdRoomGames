@@ -253,7 +253,7 @@ export default function LobbyPage() {
         initial={{ scale: 0.93, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.07 }}
-        className="bg-gray-900/85 border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+        className="bg-gray-900/92 border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl"
       >
         {/* Tab toggle */}
         <div className="flex rounded-xl bg-black/30 p-1 mb-6 gap-0.5">

@@ -32,16 +32,18 @@ html, body { height: 100%; margin: 0; padding: 0; }
 .suit-red   { color: #ef4444; }
 .suit-black { color: #1a1a2e; }
 
-/* ── Shared felt-table background (home / lobby / how-to-play) ──────────────
-   Layered: dark vignette on top for text contrast, table-bg.jpg underneath,
-   scaled to always fill the viewport regardless of screen size. */
+/* ── Shared felt-table background (home / lobby / how-to-play / our-promise) ─
+   Layered: dark vignette on top for text contrast, a small hand-built SVG
+   suit tile underneath (vector, so it repeats at a controlled small size
+   with zero seam artifacts — unlike stretching one big raster image). */
 .table-bg {
+  background-color: #0d2b1e;
   background-image:
-    radial-gradient(ellipse at center, rgba(26,71,49,0.35) 0%, rgba(13,43,30,0.55) 55%, rgba(9,26,18,0.85) 100%),
-    url("/brand/table-bg.jpg");
-  background-size: cover, cover;
+    radial-gradient(ellipse at center, rgba(26,71,49,0.5) 0%, rgba(13,43,30,0.7) 55%, rgba(9,26,18,0.92) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg transform='rotate(20 70 70)' font-family='Arial' font-size='24'%3E%3Ctext x='8' y='34' fill='white' fill-opacity='0.06'%3E%E2%99%A0%3C/text%3E%3Ctext x='78' y='34' fill='%23f87171' fill-opacity='0.07'%3E%E2%99%A5%3C/text%3E%3Ctext x='8' y='104' fill='%23f87171' fill-opacity='0.07'%3E%E2%99%A6%3C/text%3E%3Ctext x='78' y='104' fill='white' fill-opacity='0.06'%3E%E2%99%A3%3C/text%3E%3C/g%3E%3C/svg%3E");
+  background-size: cover, 140px 140px;
   background-position: center, center;
-  background-repeat: no-repeat, no-repeat;
+  background-repeat: no-repeat, repeat;
   background-attachment: scroll, fixed;
 }
 @media (max-width: 640px) {

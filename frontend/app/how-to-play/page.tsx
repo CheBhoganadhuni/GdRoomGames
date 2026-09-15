@@ -50,7 +50,7 @@ export default function HowToPlay() {
           {STEPS.map((s) => (
             <div
               key={s.heading}
-              className="bg-gray-900/80 backdrop-blur border border-white/10 rounded-2xl p-6"
+              className="bg-gray-900/92 backdrop-blur border border-white/10 rounded-2xl p-6"
             >
               <h2 className="text-yellow-300 font-bold text-lg mb-2">{s.heading}</h2>
               <p className="text-gray-300 text-sm leading-relaxed">{s.body}</p>
@@ -58,7 +58,7 @@ export default function HowToPlay() {
           ))}
         </div>
 
-        <div className="bg-gray-900/80 backdrop-blur border border-white/10 rounded-2xl p-6 mt-4">
+        <div className="bg-gray-900/92 backdrop-blur border border-white/10 rounded-2xl p-6 mt-4">
           <h2 className="text-yellow-300 font-bold text-lg mb-2">Playing together</h2>
           <p className="text-gray-300 text-sm leading-relaxed">
             One person creates a room and shares the room code (or the link) with friends.

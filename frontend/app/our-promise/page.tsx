@@ -22,7 +22,7 @@ export default function OurPromise() {
         </div>
 
         <div className="flex flex-col gap-4">
-          <div className="bg-gray-900/80 backdrop-blur border border-white/10 rounded-2xl p-6">
+          <div className="bg-gray-900/92 backdrop-blur border border-white/10 rounded-2xl p-6">
             <div className="flex items-start gap-4">
               <div className="text-3xl shrink-0">🎓</div>
               <div>
@@ -39,7 +39,7 @@ export default function OurPromise() {
             </div>
           </div>
 
-          <div className="bg-emerald-950/60 backdrop-blur border border-emerald-500/30 rounded-2xl p-6">
+          <div className="bg-emerald-950/80 backdrop-blur border border-emerald-500/30 rounded-2xl p-6">
             <div className="flex items-start gap-4">
               <div className="text-3xl shrink-0">🚫</div>
               <div>
@@ -56,7 +56,7 @@ export default function OurPromise() {
             </div>
           </div>
 
-          <div className="bg-amber-950/40 backdrop-blur border border-amber-500/30 rounded-2xl p-6">
+          <div className="bg-amber-950/70 backdrop-blur border border-amber-500/30 rounded-2xl p-6">
             <div className="flex items-start gap-4">
               <div className="text-3xl shrink-0">⚠️</div>
               <div>
@@ -75,7 +75,7 @@ export default function OurPromise() {
           </div>
         </div>
 
-        <div className="bg-gray-900/80 backdrop-blur border border-white/10 rounded-2xl p-6 mt-4 text-center">
+        <div className="bg-gray-900/92 backdrop-blur border border-white/10 rounded-2xl p-6 mt-4 text-center">
           <h2 className="text-yellow-300 font-bold text-lg mb-2">Questions or concerns?</h2>
           <p className="text-gray-300 text-sm leading-relaxed mb-4">
             This is a small student-run project built by one developer. Reach out directly
