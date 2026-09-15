@@ -12,7 +12,14 @@ DEBUG = os.getenv("DEBUG", "True") == "True"
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,*").split(",")
 
 INSTALLED_APPS = [
+    # Only added for /admin/ — a way to actually browse the Event/Game/Player
+    # tables without building a dashboard. The REST API itself stays fully
+    # unauthenticated (see REST_FRAMEWORK below) — this doesn't change that.
+    "django.contrib.admin",
+    "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
     "corsheaders",
@@ -25,13 +32,24 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
+    # Session/auth/messages — required for /admin/ login, nothing else uses them.
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-TEMPLATES = [{"BACKEND": "django.template.backends.django.DjangoTemplates", "DIRS": [], "APP_DIRS": True, "OPTIONS": {"context_processors": []}}]
+TEMPLATES = [{
+    "BACKEND": "django.template.backends.django.DjangoTemplates", "DIRS": [], "APP_DIRS": True,
+    "OPTIONS": {"context_processors": [
+        "django.template.context_processors.request",
+        "django.contrib.auth.context_processors.auth",
+        "django.contrib.messages.context_processors.messages",
+    ]},
+}]
 
 # Database — SQLite for local dev, Supabase PostgreSQL in prod via DATABASE_URL
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -69,7 +87,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
-    "UNAUTHENTICATED_USER": None,  # No django.contrib.auth in INSTALLED_APPS
+    "UNAUTHENTICATED_USER": None,  # API stays unauthenticated even though django.contrib.auth is now installed (for /admin/ only)
     # Per-IP throttling — no auth on this API, so anon rate is the only rate.
     # Uses Django's default LocMemCache, which matches the existing single-process
     # Daphne assumption (see CHANNEL_LAYERS above); switch to a shared cache

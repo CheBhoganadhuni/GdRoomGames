@@ -19,6 +19,13 @@ services:
         value: "False"
       - key: CORS_ALLOWED_ORIGINS
         value: "https://openspades.in,https://www.openspades.in"
+      # Pinned because Django 4.2 doesn't support Python 3.14+ (confirmed
+      # locally: /admin/ throws AttributeError on the template Context
+      # internals under 3.14). Without this Render defaults to whatever its
+      # platform picks, which will eventually be a version this app breaks
+      # on. Bump this only alongside a Django upgrade that supports it.
+      - key: PYTHON_VERSION
+        value: "3.12.7"
 
 databases:
   - name: openspades-db
