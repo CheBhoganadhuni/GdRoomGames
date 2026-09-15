@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
 import PromiseBanner from "@/components/PromiseBanner";
+import { track } from "@/lib/analytics";
 
 type Tab = "create" | "join" | "resume";
 
@@ -92,6 +93,7 @@ export default function LobbyPage() {
     const saved = localStorage.getItem("os_username");
     if (!saved) { router.push("/"); return; }
     setUsername(saved);
+    track("lobby_reached", { username: saved });
   }, [router]);
 
   // Keep Render warm — ping every 8 minutes so the free-tier instance never sleeps

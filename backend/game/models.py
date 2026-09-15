@@ -49,6 +49,33 @@ class Game(models.Model):
         return f"Game {self.code} ({self.status})"
 
 
+class Event(models.Model):
+    """Lightweight analytics event — game-lifecycle funnel tracking.
+
+    Not a page-view tool: this exists to answer game-state funnel questions
+    (site load -> username -> lobby -> room created/joined -> started ->
+    finished), which a page-view analytics tool doesn't capture naturally.
+    """
+    event_type = models.CharField(max_length=40)
+    game_code  = models.CharField(max_length=6, blank=True)
+    username   = models.CharField(max_length=50, blank=True)
+    # Client-generated UUID persisted in localStorage, independent of
+    # username, so we can tell "same browser came back" across days even
+    # if they never create/join a room this visit.
+    session_id = models.CharField(max_length=40, blank=True)
+    meta       = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["event_type", "created_at"]),
+            models.Index(fields=["session_id"]),
+        ]
+
+    def __str__(self):
+        return f"{self.event_type} @ {self.created_at:%Y-%m-%d %H:%M}"
+
+
 class Player(models.Model):
     game         = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="players")
     username     = models.CharField(max_length=50)

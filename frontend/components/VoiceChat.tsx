@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from "react";
+import { track } from "@/lib/analytics";
 
 // Deterministic Agora UID from username so we can reverse-lookup by name.
 // djb2 hash clamped to positive 32-bit int (Agora valid range: 1..2^32-1).
@@ -128,6 +129,7 @@ const VoiceChat = forwardRef<VoiceChatHandle, Props>(function VoiceChat(
       await client.publish([micTrack]);
 
       setPhase("live");
+      track("voice_enabled", { username, gameCode });
     } catch (e: any) {
       setErrorMsg(e.message ?? "Voice error");
       setPhase("error");

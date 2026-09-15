@@ -75,5 +75,5 @@ REST_FRAMEWORK = {
     # Daphne assumption (see CHANNEL_LAYERS above); switch to a shared cache
     # (Redis) if this ever scales to multiple worker processes.
     "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
-    "DEFAULT_THROTTLE_RATES": {"anon": "60/min", "create_game": "10/min"},
+    "DEFAULT_THROTTLE_RATES": {"anon": "60/min", "create_game": "10/min", "track_event": "30/min"},
 }

@@ -7,6 +7,7 @@ urlpatterns = [
     path("create/",               views.CreateGameView.as_view()),
     path("join/",                 views.JoinGameView.as_view()),
     path("resume-export/",        views.ResumeFromExportView.as_view()),
+    path("track/",                 views.TrackEventView.as_view()),
     path("<str:code>/history/",   views.RoundHistoryView.as_view()),
     path("<str:code>/",           views.GameDetailView.as_view()),
 ]

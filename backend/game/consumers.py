@@ -3,7 +3,7 @@ import time
 from urllib.parse import parse_qs
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import Game, Player, Round, Trick, TrickCard, Spectator, BidLog
+from .models import Game, Player, Round, Trick, TrickCard, Spectator, BidLog, Event
 from . import engine
 
 
@@ -1246,12 +1246,25 @@ class GameConsumer(AsyncWebsocketConsumer):
         if teams_enabled is not None:
             game.teams_enabled = teams_enabled
         game.save()
+        Event.objects.create(
+            event_type="game_started", game_code=game.code, username=game.host_username,
+            meta={"expected_players": game.expected_players, "teams_enabled": game.teams_enabled},
+        )
 
     @database_sync_to_async
     def db_update_game(self, game, **kwargs):
+        was_finished = game.status == Game.STATUS_FINISHED
         for k, v in kwargs.items():
             setattr(game, k, v)
         game.save()
+        # Centralized hook: every "mark this game finished" call site (manual
+        # end, host finish, auto-finish on mathematical certainty) routes
+        # through here, so log once, deduplicated against re-entry.
+        if kwargs.get("status") == Game.STATUS_FINISHED and not was_finished:
+            Event.objects.create(
+                event_type="game_finished", game_code=game.code,
+                meta={"declared": bool(kwargs.get("declared", False)), "final_round": game.current_round},
+            )
 
     @database_sync_to_async
     def db_create_round(self, game, trump_card, cards_per):

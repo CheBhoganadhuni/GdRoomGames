@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.throttling import ScopedRateThrottle
-from .models import Game, Player, BidLog, TrickCard
+from .models import Game, Player, BidLog, TrickCard, Event
 from . import engine
 from .serializers import GameSerializer
 
@@ -175,6 +175,10 @@ class CreateGameView(APIView):
             max_rounds=num_rounds,   # 0 = host didn't pick, use formula at start
         )
         Player.objects.create(game=game, username=username, seat=0)
+        Event.objects.create(
+            event_type="room_created", game_code=game.code, username=username,
+            session_id=(request.data.get("session_id") or "").strip()[:40],
+        )
         return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
 
 
@@ -214,6 +218,10 @@ class JoinGameView(APIView):
             n += 1
 
         Player.objects.create(game=game, username=username, seat=game.players.count())
+        Event.objects.create(
+            event_type="room_joined", game_code=game.code, username=username,
+            session_id=(request.data.get("session_id") or "").strip()[:40],
+        )
         return Response(GameSerializer(game).data)
 
 
@@ -226,6 +234,34 @@ class GameDetailView(APIView):
         except Game.DoesNotExist:
             return Response({"error": "Not found."}, status=404)
         return Response(GameSerializer(game).data)
+
+
+class TrackEventView(APIView):
+    """Fire-and-forget analytics events for funnel steps that never hit
+    another backend endpoint (site load, username entered, lobby reached,
+    voice enabled). Room create/join/start/finish are logged inline at
+    their real call sites instead — more reliable than relying on the
+    frontend to also report those redundantly.
+    """
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "track_event"
+
+    ALLOWED_EVENTS = {"site_loaded", "username_entered", "lobby_reached", "voice_enabled"}
+
+    def post(self, request):
+        event_type = (request.data.get("event_type") or "").strip()[:40]
+        if event_type not in self.ALLOWED_EVENTS:
+            return Response({"error": "Unknown event_type."}, status=400)
+        meta = request.data.get("meta")
+        Event.objects.create(
+            event_type=event_type,
+            game_code=(request.data.get("game_code") or "").strip()[:6],
+            username=(request.data.get("username") or "").strip()[:50],
+            session_id=(request.data.get("session_id") or "").strip()[:40],
+            meta=meta if isinstance(meta, dict) else {},
+        )
+        return Response(status=204)
 
 
 class HealthCheckView(APIView):

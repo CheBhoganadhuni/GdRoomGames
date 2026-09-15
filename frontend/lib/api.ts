@@ -1,3 +1,5 @@
+import { getSessionId } from "@/lib/analytics";
+
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 async function req(path: string, opts: RequestInit = {}) {
@@ -21,11 +23,17 @@ export const api = {
   ) =>
     req("/api/game/create/", {
       method: "POST",
-      body: JSON.stringify({ username, num_decks, expected_players, teams_enabled, num_rounds, start_round }),
+      body: JSON.stringify({
+        username, num_decks, expected_players, teams_enabled, num_rounds, start_round,
+        session_id: getSessionId(),
+      }),
     }),
 
   joinGame: (username: string, code: string) =>
-    req("/api/game/join/", { method: "POST", body: JSON.stringify({ username, code }) }),
+    req("/api/game/join/", {
+      method: "POST",
+      body: JSON.stringify({ username, code, session_id: getSessionId() }),
+    }),
 
   getGame: (code: string) => req(`/api/game/${code}/`),
 

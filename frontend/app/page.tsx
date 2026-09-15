@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import PromiseBanner from "@/components/PromiseBanner";
+import { track } from "@/lib/analytics";
 
 const SUITS = ["♠", "♥", "♦", "♣"];
 
@@ -14,6 +15,10 @@ export default function Home() {
   const [serverReady, setServerReady] = useState(false);
 
   useEffect(() => {
+    // Fires for every visit, including one that immediately redirects to
+    // /lobby — this is the true top-of-funnel number.
+    track("site_loaded", { meta: { device: window.innerWidth < 768 ? "mobile" : "desktop" } });
+
     const saved = localStorage.getItem("os_username");
     if (saved) {
       router.push("/lobby");
@@ -49,6 +54,7 @@ export default function Home() {
     const trimmed = name.trim();
     if (!trimmed) { setHint(true); return; }
     localStorage.setItem("os_username", trimmed);
+    track("username_entered", { username: trimmed });
     router.push("/lobby");
   }
 
