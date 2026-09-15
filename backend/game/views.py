@@ -13,6 +13,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from .models import Game, Player, BidLog, TrickCard, Event
 from . import engine
 from .serializers import GameSerializer
+from .backup import trigger_full_backup_export
 
 
 def parse_snapshot(content: str) -> dict:
@@ -262,6 +263,26 @@ class TrackEventView(APIView):
             meta=meta if isinstance(meta, dict) else {},
         )
         return Response(status=204)
+
+
+class TriggerBackupExportView(APIView):
+    """Dumps all game+auth data to Telegram. Guarded by a narrow, single-purpose
+    shared secret (EXPORT_SECRET env var) rather than the full Render API
+    token — this endpoint can only ever trigger a read-only export, nothing
+    else, so it's safe to leave the secret in a scheduled reminder prompt.
+    """
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "track_event"  # reuse the existing generous-but-bounded rate
+
+    def post(self, request):
+        expected = os.environ.get("EXPORT_SECRET", "")
+        provided = request.headers.get("X-Export-Secret", "")
+        if not expected or not secrets.compare_digest(expected, provided):
+            return Response({"error": "Forbidden."}, status=403)
+
+        ok, message = trigger_full_backup_export()
+        return Response({"success": ok, "message": message}, status=200 if ok else 500)
 
 
 class HealthCheckView(APIView):
