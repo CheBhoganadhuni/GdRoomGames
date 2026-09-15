@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import PromiseBanner from "@/components/PromiseBanner";
@@ -9,7 +9,22 @@ import { track } from "@/lib/analytics";
 const SUITS = ["♠", "♥", "♦", "♣"];
 
 export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeInner />
+    </Suspense>
+  );
+}
+
+function HomeInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Carries a room code through the "type your name first" step for
+  // one-click WhatsApp join links (?code=ABCDEF) — someone with no saved
+  // username yet still ends up auto-joining that room after entering a name.
+  const joinCode = searchParams.get("code");
+  const lobbyHref = joinCode ? `/lobby?code=${encodeURIComponent(joinCode)}` : "/lobby";
+
   const [name, setName] = useState("");
   const [hint, setHint] = useState(false);
   const [serverReady, setServerReady] = useState(false);
@@ -21,7 +36,7 @@ export default function Home() {
 
     const saved = localStorage.getItem("os_username");
     if (saved) {
-      router.push("/lobby");
+      router.push(lobbyHref);
       return;
     }
 
@@ -45,7 +60,8 @@ export default function Home() {
     intervalId = setInterval(checkServer, 3000);
 
     return () => clearInterval(intervalId);
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, lobbyHref]);
 
   function enter(e: React.FormEvent) {
     e.preventDefault();
@@ -55,7 +71,7 @@ export default function Home() {
     if (!trimmed) { setHint(true); return; }
     localStorage.setItem("os_username", trimmed);
     track("username_entered", { username: trimmed });
-    router.push("/lobby");
+    router.push(lobbyHref);
   }
 
   return (

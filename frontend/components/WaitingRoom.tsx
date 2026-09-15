@@ -118,7 +118,7 @@ export default function WaitingRoom({ state, username, gameCode, onStartGame, on
   }
 
   const whatsappShareText = encodeURIComponent(
-    `❤️ Join my OpenSpades game!\n\nRoom Code: ${gameCode}\n\nPlay free, no signup: https://openspades.in`
+    `❤️ Join my OpenSpades game!\n\nRoom Code: ${gameCode}\n\nOne tap to join: https://openspades.in/lobby?code=${gameCode}`
   );
 
   // Build seat slots 0…expected-1
@@ -495,7 +495,7 @@ export default function WaitingRoom({ state, username, gameCode, onStartGame, on
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => { onLeaveGame(); router.push("/"); }}
+              onClick={() => { onLeaveGame(); router.push("/lobby?tab=join"); }}
               className="text-xs px-5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-gray-500 hover:text-gray-300 font-semibold transition-all"
             >
               ← Leave Room

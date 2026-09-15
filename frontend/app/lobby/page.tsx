@@ -1,9 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
 import PromiseBanner from "@/components/PromiseBanner";
+import ErrorModal from "@/components/ErrorModal";
 import { track } from "@/lib/analytics";
 
 type Tab = "create" | "join" | "resume";
@@ -21,9 +22,22 @@ interface PlayerOption {
 }
 
 export default function LobbyPage() {
+  return (
+    <Suspense fallback={null}>
+      <LobbyPageInner />
+    </Suspense>
+  );
+}
+
+function LobbyPageInner() {
   const router   = useRouter();
+  const searchParams = useSearchParams();
+  const codeFromLink = searchParams.get("code");
+  const wantsJoinTab = codeFromLink || searchParams.get("tab") === "join";
+  const autoJoinedRef = useRef(false);
+
   const [username, setUsername] = useState<string | null>(null);
-  const [tab, setTab]           = useState<Tab>("create");
+  const [tab, setTab]           = useState<Tab>(wantsJoinTab ? "join" : "create");
 
   // Create form
   const [numPlayers, setNumPlayers] = useState(4);
@@ -31,7 +45,7 @@ export default function LobbyPage() {
   const [teamsOn,    setTeamsOn]    = useState(false);
 
   // Join form
-  const [joinCode, setJoinCode] = useState("");
+  const [joinCode, setJoinCode] = useState(codeFromLink ? codeFromLink.toUpperCase() : "");
 
   // Spectator player picker (shown when joining a started game)
   const [spectateGame, setSpectateGame] = useState<{ code: string; players: PlayerOption[] } | null>(null);
@@ -91,10 +105,25 @@ export default function LobbyPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("os_username");
-    if (!saved) { router.push("/"); return; }
+    if (!saved) {
+      // No name yet — send them to enter one first, carrying the room
+      // code along so a one-click WhatsApp join link still works.
+      router.push(codeFromLink ? `/?code=${encodeURIComponent(codeFromLink)}` : "/");
+      return;
+    }
     setUsername(saved);
     track("lobby_reached", { username: saved });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
+
+  // One-click join: a ?code= link means someone already has a name and
+  // just wants straight into the room, no manual code typing.
+  useEffect(() => {
+    if (!username || !codeFromLink || autoJoinedRef.current) return;
+    autoJoinedRef.current = true;
+    join();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
 
   // Keep Render warm — ping every 8 minutes so the free-tier instance never sleeps
   useEffect(() => {
@@ -121,8 +150,8 @@ export default function LobbyPage() {
     finally { setLoading(false); }
   }
 
-  async function join(e: React.FormEvent) {
-    e.preventDefault();
+  async function join(formEvent?: React.FormEvent) {
+    formEvent?.preventDefault();
     if (!username) return;
     setError(""); setLoading(true);
     try {
@@ -607,16 +636,9 @@ export default function LobbyPage() {
           )}
         </AnimatePresence>
 
-        {error && (
-          <motion.p
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-red-400 text-sm text-center mt-3"
-          >
-            {error}
-          </motion.p>
-        )}
       </motion.div>
+
+      <ErrorModal message={error || null} onDismiss={() => setError("")} />
 
       <div className="mt-5">
         <PromiseBanner />

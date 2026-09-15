@@ -8,7 +8,14 @@ async function req(path: string, opts: RequestInit = {}) {
     ...opts,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || "Request failed");
+  if (!res.ok) {
+    if (res.status === 429) {
+      // DRF throttling uses "detail", not "error" — surface the real reason
+      // instead of a generic "Request failed".
+      throw new Error(data.detail || "Too many attempts — wait a moment and try again.");
+    }
+    throw new Error(data.error || data.detail || "Request failed");
+  }
   return data;
 }
 
